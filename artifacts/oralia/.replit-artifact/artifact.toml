@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Oralia"
+version = "1.0.0"
+id = "artifacts/oralia"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22978
+
+[services.development]
+run = "pnpm --filter @workspace/oralia run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/oralia", "run", "build" ]
+publicDir = "artifacts/oralia/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22978"
+BASE_PATH = "/"

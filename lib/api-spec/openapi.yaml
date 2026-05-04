@@ -1,22 +1,43 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Oralia API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: profile
+    description: User profile and onboarding
+  - name: goals
+    description: Goal management
+  - name: checkins
+    description: Daily check-ins
+  - name: guidance
+    description: AI daily guidance
+  - name: chakra
+    description: Chakra assessments
+  - name: relationships
+    description: Relationship profiles
+  - name: locations
+    description: Location strategy
+  - name: library
+    description: Content library
+  - name: patterns
+    description: Pattern intelligence
+  - name: dashboard
+    description: Dashboard summary
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +45,700 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterBody"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get user profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "404":
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Create or update user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileBody"
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+
+  /goals:
+    get:
+      operationId: listGoals
+      tags: [goals]
+      summary: List all goals
+      responses:
+        "200":
+          description: List of goals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Goal"
+    post:
+      operationId: createGoal
+      tags: [goals]
+      summary: Create a goal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGoalBody"
+      responses:
+        "201":
+          description: Goal created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Goal"
+
+  /goals/{id}:
+    patch:
+      operationId: updateGoal
+      tags: [goals]
+      summary: Update a goal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGoalBody"
+      responses:
+        "200":
+          description: Goal updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Goal"
+        "404":
+          description: Goal not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteGoal
+      tags: [goals]
+      summary: Delete a goal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Goal deleted
+
+  /checkins:
+    get:
+      operationId: listCheckins
+      tags: [checkins]
+      summary: List check-ins
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          description: List of check-ins
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DailyCheckin"
+    post:
+      operationId: createCheckin
+      tags: [checkins]
+      summary: Create a daily check-in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCheckinBody"
+      responses:
+        "201":
+          description: Check-in created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyCheckin"
+
+  /checkins/recent:
+    get:
+      operationId: getRecentCheckins
+      tags: [checkins]
+      summary: Get recent check-ins for pattern analysis
+      responses:
+        "200":
+          description: Recent check-ins
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DailyCheckin"
+
+  /checkins/{id}:
+    get:
+      operationId: getCheckin
+      tags: [checkins]
+      summary: Get a single check-in
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Check-in details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyCheckin"
+        "404":
+          description: Check-in not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /guidance/today:
+    get:
+      operationId: getTodayGuidance
+      tags: [guidance]
+      summary: Get today's cached guidance
+      responses:
+        "200":
+          description: Today's guidance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyGuidance"
+        "404":
+          description: No guidance for today
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /guidance/daily:
+    post:
+      operationId: generateDailyGuidance
+      tags: [guidance]
+      summary: Generate daily guidance
+      responses:
+        "200":
+          description: Generated guidance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyGuidance"
+
+  /chakra-assessments:
+    get:
+      operationId: listChakraAssessments
+      tags: [chakra]
+      summary: List chakra assessments
+      responses:
+        "200":
+          description: List of assessments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChakraAssessment"
+    post:
+      operationId: createChakraAssessment
+      tags: [chakra]
+      summary: Create a chakra assessment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChakraAssessmentBody"
+      responses:
+        "201":
+          description: Assessment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChakraAssessment"
+
+  /chakra-assessments/latest:
+    get:
+      operationId: getLatestChakraAssessment
+      tags: [chakra]
+      summary: Get the latest chakra assessment
+      responses:
+        "200":
+          description: Latest assessment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChakraAssessment"
+        "404":
+          description: No assessments found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /relationships:
+    get:
+      operationId: listRelationships
+      tags: [relationships]
+      summary: List relationship profiles
+      responses:
+        "200":
+          description: List of relationships
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RelationshipProfile"
+    post:
+      operationId: createRelationship
+      tags: [relationships]
+      summary: Create a relationship profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRelationshipBody"
+      responses:
+        "201":
+          description: Relationship created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RelationshipProfile"
+
+  /relationships/{id}:
+    get:
+      operationId: getRelationship
+      tags: [relationships]
+      summary: Get a relationship profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Relationship profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RelationshipProfile"
+        "404":
+          description: Relationship not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateRelationship
+      tags: [relationships]
+      summary: Update a relationship profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRelationshipBody"
+      responses:
+        "200":
+          description: Relationship updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RelationshipProfile"
+        "404":
+          description: Relationship not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteRelationship
+      tags: [relationships]
+      summary: Delete a relationship profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Relationship deleted
+
+  /relationships/{id}/summary:
+    post:
+      operationId: generateRelationshipSummary
+      tags: [relationships]
+      summary: Generate AI relationship summary
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Relationship summary generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RelationshipProfile"
+        "404":
+          description: Relationship not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /locations:
+    get:
+      operationId: listLocations
+      tags: [locations]
+      summary: List location profiles
+      responses:
+        "200":
+          description: List of locations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LocationProfile"
+    post:
+      operationId: createLocation
+      tags: [locations]
+      summary: Create a location profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLocationBody"
+      responses:
+        "201":
+          description: Location created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationProfile"
+
+  /locations/{id}:
+    get:
+      operationId: getLocation
+      tags: [locations]
+      summary: Get a location profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Location profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationProfile"
+        "404":
+          description: Location not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateLocation
+      tags: [locations]
+      summary: Update a location profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLocationBody"
+      responses:
+        "200":
+          description: Location updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationProfile"
+        "404":
+          description: Location not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteLocation
+      tags: [locations]
+      summary: Delete a location profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Location deleted
+
+  /locations/{id}/strategy:
+    post:
+      operationId: generateLocationStrategy
+      tags: [locations]
+      summary: Generate AI location strategy
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Location strategy generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocationProfile"
+        "404":
+          description: Location not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /library:
+    get:
+      operationId: listLibraryEntries
+      tags: [library]
+      summary: List library entries
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of library entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LibraryEntry"
+
+  /library/categories:
+    get:
+      operationId: listLibraryCategories
+      tags: [library]
+      summary: List library categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /library/{id}:
+    get:
+      operationId: getLibraryEntry
+      tags: [library]
+      summary: Get a library entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Library entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LibraryEntry"
+        "404":
+          description: Entry not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /patterns/summary:
+    get:
+      operationId: getPatternSummary
+      tags: [patterns]
+      summary: Get pattern intelligence summary
+      responses:
+        "200":
+          description: Pattern summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatternSummary"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary data
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +749,745 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    RegisterBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - name
+        - email
+        - password
+
+    LoginBody:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+      required:
+        - id
+        - name
+        - email
+
+    Profile:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        fullName:
+          type: string
+        birthday:
+          type: string
+        birthTime:
+          type: ["string", "null"]
+        birthCity:
+          type: ["string", "null"]
+        currentCity:
+          type: ["string", "null"]
+        relationshipStatus:
+          type: ["string", "null"]
+        careerStage:
+          type: ["string", "null"]
+        topGoals:
+          type: array
+          items:
+            type: string
+        currentChallenges:
+          type: ["string", "null"]
+        guidanceCategories:
+          type: array
+          items:
+            type: string
+        menstrualCycleTracking:
+          type: boolean
+        sleepTracking:
+          type: boolean
+        spiritualOpenness:
+          type: ["string", "null"]
+        guidanceTone:
+          type: ["string", "null"]
+        hdType:
+          type: ["string", "null"]
+        hdStrategy:
+          type: ["string", "null"]
+        hdAuthority:
+          type: ["string", "null"]
+        hdProfile:
+          type: ["string", "null"]
+        hdDefinedCenters:
+          type: array
+          items:
+            type: string
+        hdKeyGates:
+          type: array
+          items:
+            type: string
+        sunSign:
+          type: ["string", "null"]
+        lifePathNumber:
+          type: ["integer", "null"]
+        onboardingComplete:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - fullName
+        - birthday
+        - onboardingComplete
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        fullName:
+          type: string
+        birthday:
+          type: string
+        birthTime:
+          type: ["string", "null"]
+        birthCity:
+          type: ["string", "null"]
+        currentCity:
+          type: ["string", "null"]
+        relationshipStatus:
+          type: ["string", "null"]
+        careerStage:
+          type: ["string", "null"]
+        topGoals:
+          type: array
+          items:
+            type: string
+        currentChallenges:
+          type: ["string", "null"]
+        guidanceCategories:
+          type: array
+          items:
+            type: string
+        menstrualCycleTracking:
+          type: boolean
+        sleepTracking:
+          type: boolean
+        spiritualOpenness:
+          type: ["string", "null"]
+        guidanceTone:
+          type: ["string", "null"]
+        hdType:
+          type: ["string", "null"]
+        hdStrategy:
+          type: ["string", "null"]
+        hdAuthority:
+          type: ["string", "null"]
+        hdProfile:
+          type: ["string", "null"]
+        hdDefinedCenters:
+          type: array
+          items:
+            type: string
+        hdKeyGates:
+          type: array
+          items:
+            type: string
+        onboardingComplete:
+          type: boolean
+      required:
+        - fullName
+        - birthday
+
+    Goal:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        title:
+          type: string
+        category:
+          type: ["string", "null"]
+        status:
+          type: string
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - title
+        - status
+
+    CreateGoalBody:
+      type: object
+      properties:
+        title:
+          type: string
+        category:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+      required:
+        - title
+
+    UpdateGoalBody:
+      type: object
+      properties:
+        title:
+          type: string
+        category:
+          type: ["string", "null"]
+        status:
+          type: string
+        notes:
+          type: ["string", "null"]
+
+    DailyCheckin:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        date:
+          type: string
+        mood:
+          type: integer
+        energy:
+          type: integer
+        stress:
+          type: integer
+        sleepQuality:
+          type: integer
+        movement:
+          type: ["string", "null"]
+        socialActivity:
+          type: ["string", "null"]
+        cyclePhase:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        whatHappened:
+          type: ["string", "null"]
+        whatFeltAligned:
+          type: ["string", "null"]
+        whatFeltDraining:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - date
+        - mood
+        - energy
+        - stress
+        - sleepQuality
+
+    CreateCheckinBody:
+      type: object
+      properties:
+        mood:
+          type: integer
+          minimum: 1
+          maximum: 10
+        energy:
+          type: integer
+          minimum: 1
+          maximum: 10
+        stress:
+          type: integer
+          minimum: 1
+          maximum: 10
+        sleepQuality:
+          type: integer
+          minimum: 1
+          maximum: 10
+        movement:
+          type: ["string", "null"]
+        socialActivity:
+          type: ["string", "null"]
+        cyclePhase:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        whatHappened:
+          type: ["string", "null"]
+        whatFeltAligned:
+          type: ["string", "null"]
+        whatFeltDraining:
+          type: ["string", "null"]
+      required:
+        - mood
+        - energy
+        - stress
+        - sleepQuality
+
+    DailyGuidance:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        date:
+          type: string
+        theme:
+          type: string
+        bestUse:
+          type: string
+        avoid:
+          type: string
+        career:
+          type: string
+        relationship:
+          type: string
+        body:
+          type: string
+        chakra:
+          type: string
+        moon:
+          type: string
+        goalNudge:
+          type: string
+        action:
+          type: string
+        journalPrompt:
+          type: string
+        ritual:
+          type: string
+        isAiGenerated:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - date
+        - theme
+        - bestUse
+        - avoid
+        - career
+        - relationship
+        - body
+        - chakra
+        - moon
+        - goalNudge
+        - action
+        - journalPrompt
+        - ritual
+        - isAiGenerated
+
+    ChakraAssessment:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        root:
+          type: integer
+        sacral:
+          type: integer
+        solarPlexus:
+          type: integer
+        heart:
+          type: integer
+        throat:
+          type: integer
+        thirdEye:
+          type: integer
+        crown:
+          type: integer
+        strongestChakra:
+          type: ["string", "null"]
+        lowestChakra:
+          type: ["string", "null"]
+        recommendedPractice:
+          type: ["string", "null"]
+        journalPrompt:
+          type: ["string", "null"]
+        affirmation:
+          type: ["string", "null"]
+        somaticAction:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - root
+        - sacral
+        - solarPlexus
+        - heart
+        - throat
+        - thirdEye
+        - crown
+
+    CreateChakraAssessmentBody:
+      type: object
+      properties:
+        root:
+          type: integer
+          minimum: 1
+          maximum: 10
+        sacral:
+          type: integer
+          minimum: 1
+          maximum: 10
+        solarPlexus:
+          type: integer
+          minimum: 1
+          maximum: 10
+        heart:
+          type: integer
+          minimum: 1
+          maximum: 10
+        throat:
+          type: integer
+          minimum: 1
+          maximum: 10
+        thirdEye:
+          type: integer
+          minimum: 1
+          maximum: 10
+        crown:
+          type: integer
+          minimum: 1
+          maximum: 10
+      required:
+        - root
+        - sacral
+        - solarPlexus
+        - heart
+        - throat
+        - thirdEye
+        - crown
+
+    RelationshipProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        personName:
+          type: string
+        relationshipType:
+          type: string
+        birthday:
+          type: ["string", "null"]
+        birthTime:
+          type: ["string", "null"]
+        birthCity:
+          type: ["string", "null"]
+        communicationStyle:
+          type: ["string", "null"]
+        attachmentStyle:
+          type: ["string", "null"]
+        conflictStyle:
+          type: ["string", "null"]
+        loveLanguage:
+          type: ["string", "null"]
+        currentDynamic:
+          type: ["string", "null"]
+        communicationPattern:
+          type: ["string", "null"]
+        emotionalActivation:
+          type: ["string", "null"]
+        repairLanguage:
+          type: ["string", "null"]
+        conflictPattern:
+          type: ["string", "null"]
+        greenFlags:
+          type: ["string", "null"]
+        redFlags:
+          type: ["string", "null"]
+        bestCommunication:
+          type: ["string", "null"]
+        bestTiming:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - personName
+        - relationshipType
+
+    CreateRelationshipBody:
+      type: object
+      properties:
+        personName:
+          type: string
+        relationshipType:
+          type: string
+        birthday:
+          type: ["string", "null"]
+        birthTime:
+          type: ["string", "null"]
+        birthCity:
+          type: ["string", "null"]
+        communicationStyle:
+          type: ["string", "null"]
+        attachmentStyle:
+          type: ["string", "null"]
+        conflictStyle:
+          type: ["string", "null"]
+        loveLanguage:
+          type: ["string", "null"]
+        currentDynamic:
+          type: ["string", "null"]
+      required:
+        - personName
+        - relationshipType
+
+    UpdateRelationshipBody:
+      type: object
+      properties:
+        personName:
+          type: string
+        relationshipType:
+          type: string
+        birthday:
+          type: ["string", "null"]
+        birthTime:
+          type: ["string", "null"]
+        birthCity:
+          type: ["string", "null"]
+        communicationStyle:
+          type: ["string", "null"]
+        attachmentStyle:
+          type: ["string", "null"]
+        conflictStyle:
+          type: ["string", "null"]
+        loveLanguage:
+          type: ["string", "null"]
+        currentDynamic:
+          type: ["string", "null"]
+
+    LocationProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        city:
+          type: string
+        country:
+          type: string
+        locationType:
+          type: string
+        locationGoal:
+          type: string
+        bestUse:
+          type: ["string", "null"]
+        whatToDo:
+          type: ["string", "null"]
+        whatNotToDo:
+          type: ["string", "null"]
+        bestTimingStyle:
+          type: ["string", "null"]
+        recommendedPurpose:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - city
+        - country
+        - locationType
+        - locationGoal
+
+    CreateLocationBody:
+      type: object
+      properties:
+        city:
+          type: string
+        country:
+          type: string
+        locationType:
+          type: string
+        locationGoal:
+          type: string
+      required:
+        - city
+        - country
+        - locationType
+        - locationGoal
+
+    UpdateLocationBody:
+      type: object
+      properties:
+        city:
+          type: string
+        country:
+          type: string
+        locationType:
+          type: string
+        locationGoal:
+          type: string
+
+    LibraryEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        category:
+          type: string
+        subcategory:
+          type: ["string", "null"]
+        title:
+          type: string
+        content:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - category
+        - title
+        - content
+
+    PatternSummary:
+      type: object
+      properties:
+        avgMood:
+          type: number
+        avgEnergy:
+          type: number
+        avgStress:
+          type: number
+        avgSleepQuality:
+          type: number
+        totalCheckins:
+          type: integer
+        bestDayOfWeek:
+          type: ["string", "null"]
+        worstDayOfWeek:
+          type: ["string", "null"]
+        bestConditionsClarity:
+          type: string
+        bestConditionsCreativity:
+          type: string
+        bestConditionsConnection:
+          type: string
+        energyLeakageWarnings:
+          type: array
+          items:
+            type: string
+        weeklySummary:
+          type: string
+        recentCheckins:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyCheckin"
+      required:
+        - avgMood
+        - avgEnergy
+        - avgStress
+        - avgSleepQuality
+        - totalCheckins
+        - bestConditionsClarity
+        - bestConditionsCreativity
+        - bestConditionsConnection
+        - energyLeakageWarnings
+        - weeklySummary
+        - recentCheckins
+
+    DashboardSummary:
+      type: object
+      properties:
+        userName:
+          type: string
+        hasProfile:
+          type: boolean
+        onboardingComplete:
+          type: boolean
+        todayGuidance:
+          $ref: "#/components/schemas/DailyGuidance"
+        latestCheckin:
+          $ref: "#/components/schemas/DailyCheckin"
+        activeGoalsCount:
+          type: integer
+        checkinStreak:
+          type: integer
+        totalCheckins:
+          type: integer
+        latestChakra:
+          $ref: "#/components/schemas/ChakraAssessment"
+        relationshipsCount:
+          type: integer
+        locationsCount:
+          type: integer
+      required:
+        - userName
+        - hasProfile
+        - onboardingComplete
+        - activeGoalsCount
+        - checkinStreak
+        - totalCheckins
+        - relationshipsCount
+        - locationsCount

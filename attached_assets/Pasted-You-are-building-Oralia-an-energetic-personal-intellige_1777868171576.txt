@@ -1,0 +1,322 @@
+You are building Oralia, an energetic personal intelligence web app.
+
+The product category is Energetic Personal Intelligence.
+
+Oralia combines astrology, Human Design, numerology, astrocartography, chakras, personality assessments, moon cycles, menstrual cycle tracking, sleep patterns, personal pattern intelligence, relationship overlays, location strategy, goals, and AI generated daily guidance.
+
+The goal is to build a clean, luxury, beautiful MVP that can later become a mobile app.
+
+Use:
+- React
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+- Framer Motion
+- Lucide icons
+- Node.js
+- Express
+- PostgreSQL
+- Drizzle ORM
+
+Design direction:
+- Premium mystical intelligence
+- Clean luxury interface
+- Feminine but not childish
+- Cosmic but not cheesy
+- High readability
+- Soft gradients
+- Elegant cards
+- White, ivory, champagne, deep plum, midnight navy, soft gold, muted lavender
+- Avoid clutter
+- Avoid cartoon astrology aesthetics
+- Use a beautiful modern wellness, luxury, and intelligence dashboard feel
+
+Important:
+This is not just a horoscope app.
+It is a personal operating system for energy, timing, relationships, body rhythms, goals, locations, and self knowledge.
+
+Build the following MVP:
+
+1. Landing Page
+Create a polished landing page with:
+- Hero section
+- App name: Oralia
+- Tagline: Know your pattern. Plan your life.
+- Description: Oralia maps your energy, timing, relationships, locations, goals, and personal patterns into practical daily guidance.
+- CTA buttons: Start My Profile, View Demo
+- Feature cards:
+  - Personal Energy Profile
+  - Daily Energy Dashboard
+  - Personal Pattern Intelligence
+  - Relationship Energy Overlay
+  - Location Strategy
+  - Chakra Intelligence
+  - Human Design and Astrology Library
+  - Moon and Cycle Planning
+
+2. Auth Placeholder
+Create basic sign up and login screens.
+If Supabase is not configured yet, create clean frontend forms and backend placeholders.
+
+3. Onboarding Flow
+Create a multi step onboarding flow that collects:
+- Full name
+- Birthday
+- Birth time
+- Birth city
+- Current city
+- Relationship status
+- Career stage
+- Top 3 goals
+- Current challenges
+- Desired guidance categories
+- Menstrual cycle tracking preference
+- Sleep pattern tracking preference
+- Spiritual openness level
+- Preferred guidance tone: soft, direct, mystical, practical, luxury oracle
+
+Save onboarding data to the database.
+
+4. Dashboard
+Create a logged in dashboard with:
+- Welcome card
+- Today’s energetic theme
+- Best use of today
+- Avoid today
+- Career guidance
+- Relationship guidance
+- Body and nervous system guidance
+- Chakra focus
+- Moon phase note placeholder
+- Goal nudge
+- One action
+- One journal prompt
+- One ritual
+
+Add a button: Generate Today’s Guidance.
+
+5. AI Guidance System
+Create a backend route:
+POST /api/guidance/daily
+
+It should use the user profile, goals, latest check-in, and tone preference to generate structured daily guidance.
+
+Return JSON:
+{
+  "theme": "",
+  "bestUse": "",
+  "avoid": "",
+  "career": "",
+  "relationship": "",
+  "body": "",
+  "chakra": "",
+  "moon": "",
+  "goalNudge": "",
+  "action": "",
+  "journalPrompt": "",
+  "ritual": ""
+}
+
+If no OpenAI API key is configured, return elegant demo guidance so the app still works.
+
+Important token controls:
+- Only call the AI when the user clicks Generate Today’s Guidance.
+- Cache the generated guidance for that user and date.
+- If guidance already exists for today, load the saved guidance instead of calling the AI again.
+- Store prompt version and generated output in the database.
+- Do not call AI on every page load.
+
+6. Personal Energy Profile Page
+Create profile sections:
+- Birth Data
+- Astrology Basics placeholder
+- Numerology Basics placeholder
+- Human Design placeholder
+- Chakra Profile
+- Personality Profile
+- Communication Style
+- Relationship Style
+- Career Style
+- Strengths
+- Shadow Patterns
+- Best Hobbies
+- Best Careers
+- Best Environments
+
+For now, calculate a simple Life Path Number from birthday.
+For astrology, show sun sign based on birthday as a basic placeholder.
+For Human Design, allow manual input:
+- Type
+- Strategy
+- Authority
+- Profile
+- Defined centers
+- Key gates
+
+7. Daily Check-In
+Create a daily check-in page with:
+- Mood
+- Energy
+- Stress
+- Sleep quality
+- Movement
+- Social activity
+- Cycle phase optional
+- Notes
+- Voice note placeholder
+- What happened today
+- What felt aligned
+- What felt draining
+
+Save check-ins to the database.
+
+8. Personal Pattern Intelligence Page
+Create a page that shows:
+- Recent check-ins
+- Emerging patterns
+- Best conditions for clarity
+- Best conditions for creativity
+- Best conditions for connection
+- Energy leakage warnings
+- Weekly self knowledge summary
+
+For MVP, generate simple rule based insights from check-ins.
+Add an AI button later called Generate Pattern Summary.
+
+9. Relationship Energy Overlay
+Create a page where user can add a relationship profile:
+- Person’s name
+- Relationship type
+- Birthday optional
+- Birth time optional
+- Birth city optional
+- Communication style
+- Attachment style
+- Conflict style
+- Love language
+- Current dynamic notes
+
+Create a generated relationship summary with:
+- Communication pattern
+- Emotional activation points
+- Repair language
+- Conflict pattern
+- Green flags
+- Red flags
+- Best way to communicate
+- Best timing for hard conversations
+
+Use demo logic first and prepare an AI generation route for later.
+
+10. Location Strategy Page
+Create a page where user can add locations:
+- City
+- Country
+- Have lived there, want to visit, considering moving, business trip, retreat
+- Goal for this location: love, money, visibility, healing, writing, business, beauty, rest, reinvention
+
+Generate a simple location strategy report:
+- Best use of this location
+- What to do there
+- What not to do there
+- Best timing style
+- Recommended trip purpose
+
+Keep this as a placeholder until real astrocartography calculations are added.
+
+11. Chakra Intelligence Page
+Create a chakra assessment with sliders for:
+- Root
+- Sacral
+- Solar Plexus
+- Heart
+- Throat
+- Third Eye
+- Crown
+
+Show:
+- Balance chart
+- Strongest chakra
+- Lowest chakra
+- Recommended practice
+- Journal prompt
+- Affirmation
+- Somatic action
+
+12. Library Page
+Create a searchable library with categories:
+- Astrology
+- Planets
+- Houses
+- Signs
+- Human Design
+- Gates
+- Channels
+- Centers
+- Numerology
+- Chakras
+- Moon phases
+- Astrocartography
+- Personality
+- Relationships
+
+Seed the library with a few sample entries.
+Make the structure expandable.
+
+13. App Navigation
+Use a clean sidebar or bottom nav with:
+- Dashboard
+- My Profile
+- Check-In
+- Patterns
+- Relationships
+- Locations
+- Chakras
+- Library
+- Settings
+
+14. Database
+Set up Drizzle schema for:
+- users
+- profiles
+- birth_data
+- goals
+- daily_checkins
+- generated_guidance
+- chakra_assessments
+- relationship_profiles
+- location_profiles
+- content_library
+- saved_insights
+
+15. Styling
+Make the UI beautiful and luxury:
+- Rounded cards
+- Soft shadows
+- Subtle cosmic gradients
+- Elegant typography
+- Clear spacing
+- Mobile responsive
+- No clutter
+- No childish zodiac graphics
+- No cheap purple neon look
+
+16. Cost Control
+Add AI cost controls:
+- AI calls only on button click
+- Cache by user and date
+- Store generated outputs
+- Reuse saved outputs
+- Add fallback demo content
+- Add environment variable OPENAI_API_KEY
+- Do not expose API keys to frontend
+- Add clear server side route for AI generation
+
+17. Deliverables
+After building, provide:
+- List of files created
+- Database migration status
+- How to run locally
+- Environment variables needed
+- What is working
+- What still needs to be connected later
