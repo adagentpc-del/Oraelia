@@ -342,6 +342,11 @@ paths:
       operationId: generateDailyGuidance
       tags: [guidance]
       summary: Generate daily guidance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegenerateBody"
       responses:
         "200":
           description: Generated guidance
@@ -349,6 +354,42 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DailyGuidance"
+
+  /guidance/weekly:
+    post:
+      operationId: generateWeeklyGuidance
+      tags: [guidance]
+      summary: Generate weekly guidance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegenerateBody"
+      responses:
+        "200":
+          description: Generated weekly guidance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklyGuidance"
+
+  /guidance/monthly:
+    post:
+      operationId: generateMonthlyGuidance
+      tags: [guidance]
+      summary: Generate monthly guidance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegenerateBody"
+      responses:
+        "200":
+          description: Generated monthly guidance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonthlyGuidance"
 
   /chakra-assessments:
     get:
@@ -511,6 +552,11 @@ paths:
           required: true
           schema:
             type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegenerateBody"
       responses:
         "200":
           description: Relationship summary generated
@@ -635,6 +681,11 @@ paths:
           required: true
           schema:
             type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegenerateBody"
       responses:
         "200":
           description: Location strategy generated
@@ -721,6 +772,24 @@ paths:
       responses:
         "200":
           description: Pattern summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatternSummary"
+
+  /patterns/generate:
+    post:
+      operationId: generatePatternSummary
+      tags: [patterns]
+      summary: Generate AI pattern intelligence
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegenerateBody"
+      responses:
+        "200":
+          description: AI-generated pattern summary
           content:
             application/json:
               schema:
@@ -1068,15 +1137,17 @@ components:
         - stress
         - sleepQuality
 
+    RegenerateBody:
+      type: object
+      properties:
+        regenerate:
+          type: boolean
+
     DailyGuidance:
       type: object
       properties:
         id:
           type: integer
-        userId:
-          type: integer
-        date:
-          type: string
         theme:
           type: string
         bestUse:
@@ -1103,13 +1174,15 @@ components:
           type: string
         isAiGenerated:
           type: boolean
+        promptVersion:
+          type: string
+        cached:
+          type: boolean
         createdAt:
           type: string
           format: date-time
       required:
         - id
-        - userId
-        - date
         - theme
         - bestUse
         - avoid
@@ -1122,6 +1195,105 @@ components:
         - action
         - journalPrompt
         - ritual
+        - isAiGenerated
+
+    WeeklyGuidance:
+      type: object
+      properties:
+        id:
+          type: integer
+        weekTheme:
+          type: string
+        focus:
+          type: string
+        release:
+          type: string
+        careerStrategy:
+          type: string
+        relationshipFocus:
+          type: string
+        bodyWisdom:
+          type: string
+        energyMap:
+          type: string
+        weeklyRitual:
+          type: string
+        journalTheme:
+          type: string
+        goalStrategy:
+          type: string
+        isAiGenerated:
+          type: boolean
+        promptVersion:
+          type: string
+        cached:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - weekTheme
+        - focus
+        - release
+        - careerStrategy
+        - relationshipFocus
+        - bodyWisdom
+        - energyMap
+        - weeklyRitual
+        - journalTheme
+        - goalStrategy
+        - isAiGenerated
+
+    MonthlyGuidance:
+      type: object
+      properties:
+        id:
+          type: integer
+        monthTheme:
+          type: string
+        intention:
+          type: string
+        careerMonth:
+          type: string
+        relationshipMonth:
+          type: string
+        bodyMonth:
+          type: string
+        bestWeeks:
+          type: string
+        challenges:
+          type: string
+        opportunities:
+          type: string
+        moonGuidance:
+          type: string
+        monthlyRitual:
+          type: string
+        reflectionPrompt:
+          type: string
+        isAiGenerated:
+          type: boolean
+        promptVersion:
+          type: string
+        cached:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - monthTheme
+        - intention
+        - careerMonth
+        - relationshipMonth
+        - bodyMonth
+        - bestWeeks
+        - challenges
+        - opportunities
+        - moonGuidance
+        - monthlyRitual
+        - reflectionPrompt
         - isAiGenerated
 
     ChakraAssessment:
@@ -1444,6 +1616,14 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/DailyCheckin"
+        patternInsight:
+          type: ["string", "null"]
+        recommendation:
+          type: ["string", "null"]
+        aiGenerated:
+          type: boolean
+        cached:
+          type: boolean
       required:
         - avgMood
         - avgEnergy
@@ -1456,6 +1636,8 @@ components:
         - energyLeakageWarnings
         - weeklySummary
         - recentCheckins
+        - aiGenerated
+        - cached
 
     DashboardSummary:
       type: object

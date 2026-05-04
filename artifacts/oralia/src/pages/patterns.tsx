@@ -1,13 +1,31 @@
-import { useGetPatternSummary } from "@workspace/api-client-react";
-import type { DailyCheckin } from "@workspace/api-client-react";
+import { useState } from "react";
+import { useGetPatternSummary, useGeneratePatternSummary, getGetPatternSummaryQueryKey } from "@workspace/api-client-react";
+import type { DailyCheckin, PatternSummary } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Sparkles, RefreshCw } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { toast } from "sonner";
 
 export default function PatternsPage() {
   const { data: summary, isLoading, isError, refetch } = useGetPatternSummary();
+  const queryClient = useQueryClient();
+  const [aiPatterns, setAiPatterns] = useState<PatternSummary | null>(null);
+
+  const generatePatterns = useGeneratePatternSummary({
+    mutation: {
+      onSuccess: (data) => {
+        setAiPatterns(data);
+        queryClient.invalidateQueries({ queryKey: getGetPatternSummaryQueryKey() });
+        toast.success("Pattern intelligence generated.");
+      },
+      onError: () => {
+        toast.error("Failed to generate pattern analysis.");
+      },
+    },
+  });
 
   if (isLoading) {
     return <div className="space-y-6"><Skeleton className="h-48" /><Skeleton className="h-96" /></div>;
@@ -24,18 +42,50 @@ export default function PatternsPage() {
     );
   }
 
+  const displayData = aiPatterns || summary;
+  const hasAi = !!aiPatterns;
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-4xl font-serif font-bold text-primary tracking-wide">Pattern Intelligence</h1>
-        <p className="text-muted-foreground mt-2">Insights drawn from your daily tracking.</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-4xl font-serif font-bold text-primary tracking-wide">Pattern Intelligence</h1>
+          <p className="text-muted-foreground mt-2">Insights drawn from your daily tracking.</p>
+        </div>
+        <Button
+          onClick={() => generatePatterns.mutate({ data: { regenerate: hasAi } })}
+          disabled={generatePatterns.isPending}
+          variant={hasAi ? "outline" : "default"}
+          className="gap-2"
+        >
+          {generatePatterns.isPending ? (
+            "Generating..."
+          ) : hasAi ? (
+            <><RefreshCw className="w-4 h-4" /> Regenerate</>
+          ) : (
+            <><Sparkles className="w-4 h-4" /> Generate AI Analysis</>
+          )}
+        </Button>
       </div>
 
+      {hasAi && (
+        <div className="flex gap-2 items-center">
+          {displayData.cached && (
+            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Cached</span>
+          )}
+          {displayData.aiGenerated && (
+            <span className="flex items-center gap-1 text-xs bg-chart-2/10 text-chart-2 px-2 py-0.5 rounded-full">
+              <Sparkles className="w-3 h-3" /> AI Generated
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Avg Mood" value={summary.avgMood.toFixed(1)} />
-        <MetricCard title="Avg Energy" value={summary.avgEnergy.toFixed(1)} />
-        <MetricCard title="Avg Stress" value={summary.avgStress.toFixed(1)} />
-        <MetricCard title="Avg Sleep" value={summary.avgSleepQuality.toFixed(1)} />
+        <MetricCard title="Avg Mood" value={displayData.avgMood.toFixed(1)} />
+        <MetricCard title="Avg Energy" value={displayData.avgEnergy.toFixed(1)} />
+        <MetricCard title="Avg Stress" value={displayData.avgStress.toFixed(1)} />
+        <MetricCard title="Avg Sleep" value={displayData.avgSleepQuality.toFixed(1)} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -46,15 +96,15 @@ export default function PatternsPage() {
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center border-b border-border pb-2">
               <span className="text-muted-foreground">Best Day</span>
-              <span className="font-medium">{summary.bestDayOfWeek || "Not enough data"}</span>
+              <span className="font-medium">{displayData.bestDayOfWeek || "Not enough data"}</span>
             </div>
             <div className="flex justify-between items-center border-b border-border pb-2">
               <span className="text-muted-foreground">Most Challenging Day</span>
-              <span className="font-medium">{summary.worstDayOfWeek || "Not enough data"}</span>
+              <span className="font-medium">{displayData.worstDayOfWeek || "Not enough data"}</span>
             </div>
             <div className="pt-2">
               <span className="text-muted-foreground text-sm uppercase tracking-wider block mb-1">Weekly Summary</span>
-              <p className="text-sm">{summary.weeklySummary}</p>
+              <p className="text-sm">{displayData.weeklySummary}</p>
             </div>
           </CardContent>
         </Card>
@@ -64,9 +114,9 @@ export default function PatternsPage() {
             <CardTitle className="font-serif text-primary">Energy Leaks</CardTitle>
           </CardHeader>
           <CardContent>
-            {summary.energyLeakageWarnings.length > 0 ? (
+            {displayData.energyLeakageWarnings.length > 0 ? (
               <ul className="list-disc pl-5 text-sm space-y-2 text-destructive">
-                {summary.energyLeakageWarnings.map((warning: string, i: number) => (
+                {displayData.energyLeakageWarnings.map((warning: string, i: number) => (
                   <li key={i}>{warning}</li>
                 ))}
               </ul>
@@ -78,19 +128,48 @@ export default function PatternsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <InsightCard title="Clarity" content={summary.bestConditionsClarity} />
-        <InsightCard title="Creativity" content={summary.bestConditionsCreativity} />
-        <InsightCard title="Connection" content={summary.bestConditionsConnection} />
+        <InsightCard title="Clarity" content={displayData.bestConditionsClarity} />
+        <InsightCard title="Creativity" content={displayData.bestConditionsCreativity} />
+        <InsightCard title="Connection" content={displayData.bestConditionsConnection} />
       </div>
 
-      {summary.recentCheckins.length > 0 && (
+      {(displayData.patternInsight || displayData.recommendation) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {displayData.patternInsight && (
+            <Card className="bg-card border-primary/20">
+              <CardHeader>
+                <CardTitle className="font-serif text-primary flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" /> Pattern Insight
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm">{displayData.patternInsight}</p>
+              </CardContent>
+            </Card>
+          )}
+          {displayData.recommendation && (
+            <Card className="bg-card border-primary/20">
+              <CardHeader>
+                <CardTitle className="font-serif text-primary flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" /> Recommendation
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm">{displayData.recommendation}</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {displayData.recentCheckins.length > 0 && (
         <Card className="bg-card">
           <CardHeader>
             <CardTitle className="font-serif text-primary">Recent Trends</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={summary.recentCheckins} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+              <LineChart data={displayData.recentCheckins} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(val: string) => { try { return new Date(val).toLocaleDateString(undefined, {weekday: 'short'}); } catch { return val; }}} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} domain={[0, 10]} />

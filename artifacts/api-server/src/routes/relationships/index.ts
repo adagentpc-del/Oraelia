@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, usersTable, relationshipProfilesTable } from "@workspace/db";
 import { CreateRelationshipBody, UpdateRelationshipBody, GetRelationshipParams, UpdateRelationshipParams, DeleteRelationshipParams, GenerateRelationshipSummaryParams } from "@workspace/api-zod";
+import { generateContent, getCachedContent } from "../../lib/ai-engine";
 
 const router: IRouter = Router();
 
@@ -62,19 +63,43 @@ router.post("/relationships/:id/summary", async (req, res): Promise<void> => {
   const [rel] = await db.select().from(relationshipProfilesTable).where(eq(relationshipProfilesTable.id, params.data.id));
   if (!rel) { res.status(404).json({ error: "Relationship not found" }); return; }
 
-  const summary = {
-    communicationPattern: `Based on the ${rel.communicationStyle || "unspecified"} communication style, this relationship thrives with clear, intentional dialogue. Prioritize active listening and create space for both people to share openly.`,
-    emotionalActivation: `With a ${rel.attachmentStyle || "secure"} attachment style, emotional triggers may arise around themes of consistency and presence. Notice when you feel activated and practice a pause before responding.`,
-    repairLanguage: `After conflict, this relationship responds best to acknowledgment and gentle reconnection. A simple "I see you and I am here" can go a long way.`,
-    conflictPattern: `The ${rel.conflictStyle || "collaborative"} conflict approach means disagreements tend toward ${rel.conflictStyle === "avoidant" ? "silence and withdrawal" : "direct engagement"}. Name the pattern when you notice it.`,
-    greenFlags: `Mutual respect, willingness to grow together, and consistent care are strengths in this dynamic.`,
-    redFlags: `Watch for patterns of over-giving, unspoken expectations, or avoiding difficult conversations for the sake of harmony.`,
-    bestCommunication: `Speak with intention and avoid assumptions. Use "I feel" statements and check understanding before moving forward.`,
-    bestTiming: `Important conversations are best held when both people are rested and emotionally regulated — avoid late nights and high-stress moments.`,
-  };
+  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
+  if (!user) { res.status(400).json({ error: "No user found" }); return; }
 
+  const forceRegenerate = req.body?.regenerate === true;
+
+  const extraContext = [
+    `== RELATIONSHIP PROFILE ==`,
+    `Person: ${rel.personName}`,
+    `Type: ${rel.relationshipType}`,
+    rel.birthday ? `Birthday: ${rel.birthday}` : null,
+    rel.communicationStyle ? `Communication Style: ${rel.communicationStyle}` : null,
+    rel.attachmentStyle ? `Attachment Style: ${rel.attachmentStyle}` : null,
+    rel.conflictStyle ? `Conflict Style: ${rel.conflictStyle}` : null,
+    rel.loveLanguage ? `Love Language: ${rel.loveLanguage}` : null,
+    rel.currentDynamic ? `Current Dynamic: ${rel.currentDynamic}` : null,
+  ].filter(Boolean).join("\n");
+
+  const result = await generateContent({
+    userId: user.id,
+    type: "relationship_overlay",
+    referenceId: rel.id,
+    extraContext,
+    forceRegenerate,
+  });
+
+  const summary = result.content as Record<string, string>;
   const [updated] = await db.update(relationshipProfilesTable)
-    .set(summary)
+    .set({
+      communicationPattern: summary.communicationPattern,
+      emotionalActivation: summary.emotionalActivation,
+      repairLanguage: summary.repairLanguage,
+      conflictPattern: summary.conflictPattern,
+      greenFlags: summary.greenFlags,
+      redFlags: summary.redFlags,
+      bestCommunication: summary.bestCommunication,
+      bestTiming: summary.bestTiming,
+    })
     .where(eq(relationshipProfilesTable.id, params.data.id))
     .returning();
 

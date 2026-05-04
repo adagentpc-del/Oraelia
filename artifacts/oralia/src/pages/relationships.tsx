@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Trash2, AlertTriangle } from "lucide-react";
+import { Trash2, AlertTriangle, RefreshCw, Sparkles } from "lucide-react";
 
 export default function RelationshipsPage() {
   const { data: relationships, isLoading, isError, refetch } = useListRelationships();
@@ -208,29 +208,41 @@ export default function RelationshipsPage() {
                 )}
 
                 {rel.communicationPattern ? (
-                  <div>
+                  <div className="space-y-2">
                     <Button variant="link" className="px-0 h-auto text-primary" onClick={() => setExpandedId(expandedId === rel.id ? null : rel.id)}>
                       {expandedId === rel.id ? "Hide Summary" : "View Summary"}
                     </Button>
                     {expandedId === rel.id && (
                       <div className="mt-3 space-y-3 text-sm border-t border-border pt-3">
                         <div><span className="text-xs uppercase text-muted-foreground block">Communication Pattern</span>{rel.communicationPattern}</div>
+                        <div><span className="text-xs uppercase text-muted-foreground block">Emotional Activation</span>{rel.emotionalActivation}</div>
+                        <div><span className="text-xs uppercase text-muted-foreground block">Repair Language</span>{rel.repairLanguage}</div>
+                        <div><span className="text-xs uppercase text-muted-foreground block">Conflict Pattern</span>{rel.conflictPattern}</div>
                         <div><span className="text-xs uppercase text-muted-foreground block">Best Communication</span>{rel.bestCommunication}</div>
                         <div><span className="text-xs uppercase text-muted-foreground block">Best Timing</span>{rel.bestTiming}</div>
                         <div><span className="text-xs uppercase text-muted-foreground block">Green Flags</span>{rel.greenFlags}</div>
                         <div><span className="text-xs uppercase text-muted-foreground block">Red Flags</span>{rel.redFlags}</div>
                       </div>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full mt-2 gap-2 text-muted-foreground"
+                      onClick={() => generateSummary.mutate({ id: rel.id, data: { regenerate: true } })}
+                      disabled={generateSummary.isPending}
+                    >
+                      <RefreshCw className="w-3 h-3" /> Regenerate
+                    </Button>
                   </div>
                 ) : (
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full mt-2"
-                    onClick={() => generateSummary.mutate({ id: rel.id })}
+                    className="w-full mt-2 gap-2"
+                    onClick={() => generateSummary.mutate({ id: rel.id, data: {} })}
                     disabled={generateSummary.isPending}
                   >
-                    {generateSummary.isPending ? "Generating..." : "Generate Summary"}
+                    {generateSummary.isPending ? "Generating..." : <><Sparkles className="w-3 h-3" /> Generate Summary</>}
                   </Button>
                 )}
               </CardContent>

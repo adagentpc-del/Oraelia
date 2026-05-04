@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq, desc, and } from "drizzle-orm";
-import { db, usersTable, profilesTable, generatedGuidanceTable, dailyCheckinsTable, goalsTable, chakraAssessmentsTable, relationshipProfilesTable, locationProfilesTable } from "@workspace/db";
+import { db, usersTable, profilesTable, generatedGuidanceTable, generatedContentTable, dailyCheckinsTable, goalsTable, chakraAssessmentsTable, relationshipProfilesTable, locationProfilesTable } from "@workspace/db";
+import { PROMPT_VERSIONS } from "../../lib/prompts";
 
 const router: IRouter = Router();
 
@@ -23,8 +24,30 @@ router.get("/dashboard/summary", async (_req, res): Promise<void> => {
   const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.userId, user.id));
 
   const today = new Date().toISOString().split("T")[0];
-  const [todayGuidance] = await db.select().from(generatedGuidanceTable)
-    .where(and(eq(generatedGuidanceTable.userId, user.id), eq(generatedGuidanceTable.date, today)));
+
+  const [cachedGuidance] = await db.select().from(generatedContentTable)
+    .where(and(
+      eq(generatedContentTable.userId, user.id),
+      eq(generatedContentTable.contentType, "daily_guidance"),
+      eq(generatedContentTable.promptVersion, PROMPT_VERSIONS.daily_guidance),
+      eq(generatedContentTable.referenceDate, today),
+    ))
+    .orderBy(desc(generatedContentTable.createdAt))
+    .limit(1);
+
+  let todayGuidance: Record<string, unknown> | null = null;
+  if (cachedGuidance) {
+    todayGuidance = {
+      ...(cachedGuidance.content as Record<string, unknown>),
+      id: cachedGuidance.id,
+      isAiGenerated: cachedGuidance.isAiGenerated,
+      cached: true,
+    };
+  } else {
+    const [legacy] = await db.select().from(generatedGuidanceTable)
+      .where(and(eq(generatedGuidanceTable.userId, user.id), eq(generatedGuidanceTable.date, today)));
+    if (legacy) todayGuidance = legacy as unknown as Record<string, unknown>;
+  }
 
   const [latestCheckin] = await db.select().from(dailyCheckinsTable)
     .where(eq(dailyCheckinsTable.userId, user.id))

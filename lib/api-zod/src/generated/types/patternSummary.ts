@@ -23,4 +23,10 @@ export interface PatternSummary {
   energyLeakageWarnings: string[];
   weeklySummary: string;
   recentCheckins: DailyCheckin[];
+  /** @nullable */
+  patternInsight?: string | null;
+  /** @nullable */
+  recommendation?: string | null;
+  aiGenerated: boolean;
+  cached: boolean;
 }

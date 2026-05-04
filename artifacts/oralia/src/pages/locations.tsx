@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Trash2, AlertTriangle } from "lucide-react";
+import { Trash2, AlertTriangle, RefreshCw, Sparkles } from "lucide-react";
 
 export default function LocationsPage() {
   const { data: locations, isLoading, isError, refetch } = useListLocations();
@@ -174,7 +174,7 @@ export default function LocationsPage() {
                   <span className="text-xs bg-secondary/20 text-secondary-foreground px-2 py-1 rounded-sm uppercase tracking-wider">{loc.locationGoal}</span>
                 </div>
                 {loc.bestUse ? (
-                  <div>
+                  <div className="space-y-2">
                     <Button variant="link" className="px-0 h-auto text-primary" onClick={() => setExpandedId(expandedId === loc.id ? null : loc.id)}>
                       {expandedId === loc.id ? "Hide Strategy" : "View Strategy"}
                     </Button>
@@ -183,19 +183,29 @@ export default function LocationsPage() {
                         <div><span className="text-xs uppercase text-muted-foreground block">Best Use</span>{loc.bestUse}</div>
                         <div><span className="text-xs uppercase text-muted-foreground block">What to Do</span>{loc.whatToDo}</div>
                         <div><span className="text-xs uppercase text-muted-foreground block">What Not to Do</span>{loc.whatNotToDo}</div>
+                        <div><span className="text-xs uppercase text-muted-foreground block">Best Timing</span>{loc.bestTimingStyle}</div>
                         <div><span className="text-xs uppercase text-muted-foreground block">Recommended Purpose</span>{loc.recommendedPurpose}</div>
                       </div>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full mt-2 gap-2 text-muted-foreground"
+                      onClick={() => generateStrategy.mutate({ id: loc.id, data: { regenerate: true } })}
+                      disabled={generateStrategy.isPending}
+                    >
+                      <RefreshCw className="w-3 h-3" /> Regenerate
+                    </Button>
                   </div>
                 ) : (
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full mt-2"
-                    onClick={() => generateStrategy.mutate({ id: loc.id })}
+                    className="w-full mt-2 gap-2"
+                    onClick={() => generateStrategy.mutate({ id: loc.id, data: {} })}
                     disabled={generateStrategy.isPending}
                   >
-                    {generateStrategy.isPending ? "Generating..." : "Generate Strategy"}
+                    {generateStrategy.isPending ? "Generating..." : <><Sparkles className="w-3 h-3" /> Generate Strategy</>}
                   </Button>
                 )}
               </CardContent>

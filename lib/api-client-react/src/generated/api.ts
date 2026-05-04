@@ -35,8 +35,10 @@ import type {
   ListLibraryEntriesParams,
   LocationProfile,
   LoginBody,
+  MonthlyGuidance,
   PatternSummary,
   Profile,
+  RegenerateBody,
   RegisterBody,
   RelationshipProfile,
   SuccessResponse,
@@ -44,6 +46,7 @@ import type {
   UpdateLocationBody,
   UpdateProfileBody,
   UpdateRelationshipBody,
+  WeeklyGuidance,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -1352,11 +1355,14 @@ export const getGenerateDailyGuidanceUrl = () => {
 };
 
 export const generateDailyGuidance = async (
+  regenerateBody: RegenerateBody,
   options?: RequestInit,
 ): Promise<DailyGuidance> => {
   return customFetch<DailyGuidance>(getGenerateDailyGuidanceUrl(), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(regenerateBody),
   });
 };
 
@@ -1367,14 +1373,14 @@ export const getGenerateDailyGuidanceMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof generateDailyGuidance>>,
     TError,
-    void,
+    { data: BodyType<RegenerateBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof generateDailyGuidance>>,
   TError,
-  void,
+  { data: BodyType<RegenerateBody> },
   TContext
 > => {
   const mutationKey = ["generateDailyGuidance"];
@@ -1388,9 +1394,11 @@ export const getGenerateDailyGuidanceMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof generateDailyGuidance>>,
-    void
-  > = () => {
-    return generateDailyGuidance(requestOptions);
+    { data: BodyType<RegenerateBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateDailyGuidance(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -1399,7 +1407,7 @@ export const getGenerateDailyGuidanceMutationOptions = <
 export type GenerateDailyGuidanceMutationResult = NonNullable<
   Awaited<ReturnType<typeof generateDailyGuidance>>
 >;
-
+export type GenerateDailyGuidanceMutationBody = BodyType<RegenerateBody>;
 export type GenerateDailyGuidanceMutationError = ErrorType<unknown>;
 
 /**
@@ -1412,17 +1420,189 @@ export const useGenerateDailyGuidance = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof generateDailyGuidance>>,
     TError,
-    void,
+    { data: BodyType<RegenerateBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof generateDailyGuidance>>,
   TError,
-  void,
+  { data: BodyType<RegenerateBody> },
   TContext
 > => {
   return useMutation(getGenerateDailyGuidanceMutationOptions(options));
+};
+
+/**
+ * @summary Generate weekly guidance
+ */
+export const getGenerateWeeklyGuidanceUrl = () => {
+  return `/api/guidance/weekly`;
+};
+
+export const generateWeeklyGuidance = async (
+  regenerateBody: RegenerateBody,
+  options?: RequestInit,
+): Promise<WeeklyGuidance> => {
+  return customFetch<WeeklyGuidance>(getGenerateWeeklyGuidanceUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(regenerateBody),
+  });
+};
+
+export const getGenerateWeeklyGuidanceMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateWeeklyGuidance>>,
+    TError,
+    { data: BodyType<RegenerateBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateWeeklyGuidance>>,
+  TError,
+  { data: BodyType<RegenerateBody> },
+  TContext
+> => {
+  const mutationKey = ["generateWeeklyGuidance"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateWeeklyGuidance>>,
+    { data: BodyType<RegenerateBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateWeeklyGuidance(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateWeeklyGuidanceMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateWeeklyGuidance>>
+>;
+export type GenerateWeeklyGuidanceMutationBody = BodyType<RegenerateBody>;
+export type GenerateWeeklyGuidanceMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Generate weekly guidance
+ */
+export const useGenerateWeeklyGuidance = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateWeeklyGuidance>>,
+    TError,
+    { data: BodyType<RegenerateBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateWeeklyGuidance>>,
+  TError,
+  { data: BodyType<RegenerateBody> },
+  TContext
+> => {
+  return useMutation(getGenerateWeeklyGuidanceMutationOptions(options));
+};
+
+/**
+ * @summary Generate monthly guidance
+ */
+export const getGenerateMonthlyGuidanceUrl = () => {
+  return `/api/guidance/monthly`;
+};
+
+export const generateMonthlyGuidance = async (
+  regenerateBody: RegenerateBody,
+  options?: RequestInit,
+): Promise<MonthlyGuidance> => {
+  return customFetch<MonthlyGuidance>(getGenerateMonthlyGuidanceUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(regenerateBody),
+  });
+};
+
+export const getGenerateMonthlyGuidanceMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateMonthlyGuidance>>,
+    TError,
+    { data: BodyType<RegenerateBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateMonthlyGuidance>>,
+  TError,
+  { data: BodyType<RegenerateBody> },
+  TContext
+> => {
+  const mutationKey = ["generateMonthlyGuidance"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateMonthlyGuidance>>,
+    { data: BodyType<RegenerateBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateMonthlyGuidance(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateMonthlyGuidanceMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateMonthlyGuidance>>
+>;
+export type GenerateMonthlyGuidanceMutationBody = BodyType<RegenerateBody>;
+export type GenerateMonthlyGuidanceMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Generate monthly guidance
+ */
+export const useGenerateMonthlyGuidance = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateMonthlyGuidance>>,
+    TError,
+    { data: BodyType<RegenerateBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateMonthlyGuidance>>,
+  TError,
+  { data: BodyType<RegenerateBody> },
+  TContext
+> => {
+  return useMutation(getGenerateMonthlyGuidanceMutationOptions(options));
 };
 
 /**
@@ -2091,6 +2271,7 @@ export const getGenerateRelationshipSummaryUrl = (id: number) => {
 
 export const generateRelationshipSummary = async (
   id: number,
+  regenerateBody: RegenerateBody,
   options?: RequestInit,
 ): Promise<RelationshipProfile> => {
   return customFetch<RelationshipProfile>(
@@ -2098,6 +2279,8 @@ export const generateRelationshipSummary = async (
     {
       ...options,
       method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(regenerateBody),
     },
   );
 };
@@ -2109,14 +2292,14 @@ export const getGenerateRelationshipSummaryMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof generateRelationshipSummary>>,
     TError,
-    { id: number },
+    { id: number; data: BodyType<RegenerateBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof generateRelationshipSummary>>,
   TError,
-  { id: number },
+  { id: number; data: BodyType<RegenerateBody> },
   TContext
 > => {
   const mutationKey = ["generateRelationshipSummary"];
@@ -2130,11 +2313,11 @@ export const getGenerateRelationshipSummaryMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof generateRelationshipSummary>>,
-    { id: number }
+    { id: number; data: BodyType<RegenerateBody> }
   > = (props) => {
-    const { id } = props ?? {};
+    const { id, data } = props ?? {};
 
-    return generateRelationshipSummary(id, requestOptions);
+    return generateRelationshipSummary(id, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -2143,7 +2326,7 @@ export const getGenerateRelationshipSummaryMutationOptions = <
 export type GenerateRelationshipSummaryMutationResult = NonNullable<
   Awaited<ReturnType<typeof generateRelationshipSummary>>
 >;
-
+export type GenerateRelationshipSummaryMutationBody = BodyType<RegenerateBody>;
 export type GenerateRelationshipSummaryMutationError = ErrorType<ErrorResponse>;
 
 /**
@@ -2156,14 +2339,14 @@ export const useGenerateRelationshipSummary = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof generateRelationshipSummary>>,
     TError,
-    { id: number },
+    { id: number; data: BodyType<RegenerateBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof generateRelationshipSummary>>,
   TError,
-  { id: number },
+  { id: number; data: BodyType<RegenerateBody> },
   TContext
 > => {
   return useMutation(getGenerateRelationshipSummaryMutationOptions(options));
@@ -2597,11 +2780,14 @@ export const getGenerateLocationStrategyUrl = (id: number) => {
 
 export const generateLocationStrategy = async (
   id: number,
+  regenerateBody: RegenerateBody,
   options?: RequestInit,
 ): Promise<LocationProfile> => {
   return customFetch<LocationProfile>(getGenerateLocationStrategyUrl(id), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(regenerateBody),
   });
 };
 
@@ -2612,14 +2798,14 @@ export const getGenerateLocationStrategyMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof generateLocationStrategy>>,
     TError,
-    { id: number },
+    { id: number; data: BodyType<RegenerateBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof generateLocationStrategy>>,
   TError,
-  { id: number },
+  { id: number; data: BodyType<RegenerateBody> },
   TContext
 > => {
   const mutationKey = ["generateLocationStrategy"];
@@ -2633,11 +2819,11 @@ export const getGenerateLocationStrategyMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof generateLocationStrategy>>,
-    { id: number }
+    { id: number; data: BodyType<RegenerateBody> }
   > = (props) => {
-    const { id } = props ?? {};
+    const { id, data } = props ?? {};
 
-    return generateLocationStrategy(id, requestOptions);
+    return generateLocationStrategy(id, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -2646,7 +2832,7 @@ export const getGenerateLocationStrategyMutationOptions = <
 export type GenerateLocationStrategyMutationResult = NonNullable<
   Awaited<ReturnType<typeof generateLocationStrategy>>
 >;
-
+export type GenerateLocationStrategyMutationBody = BodyType<RegenerateBody>;
 export type GenerateLocationStrategyMutationError = ErrorType<ErrorResponse>;
 
 /**
@@ -2659,14 +2845,14 @@ export const useGenerateLocationStrategy = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof generateLocationStrategy>>,
     TError,
-    { id: number },
+    { id: number; data: BodyType<RegenerateBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof generateLocationStrategy>>,
   TError,
-  { id: number },
+  { id: number; data: BodyType<RegenerateBody> },
   TContext
 > => {
   return useMutation(getGenerateLocationStrategyMutationOptions(options));
@@ -3005,6 +3191,92 @@ export function useGetPatternSummary<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Generate AI pattern intelligence
+ */
+export const getGeneratePatternSummaryUrl = () => {
+  return `/api/patterns/generate`;
+};
+
+export const generatePatternSummary = async (
+  regenerateBody: RegenerateBody,
+  options?: RequestInit,
+): Promise<PatternSummary> => {
+  return customFetch<PatternSummary>(getGeneratePatternSummaryUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(regenerateBody),
+  });
+};
+
+export const getGeneratePatternSummaryMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generatePatternSummary>>,
+    TError,
+    { data: BodyType<RegenerateBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generatePatternSummary>>,
+  TError,
+  { data: BodyType<RegenerateBody> },
+  TContext
+> => {
+  const mutationKey = ["generatePatternSummary"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generatePatternSummary>>,
+    { data: BodyType<RegenerateBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generatePatternSummary(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GeneratePatternSummaryMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generatePatternSummary>>
+>;
+export type GeneratePatternSummaryMutationBody = BodyType<RegenerateBody>;
+export type GeneratePatternSummaryMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Generate AI pattern intelligence
+ */
+export const useGeneratePatternSummary = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generatePatternSummary>>,
+    TError,
+    { data: BodyType<RegenerateBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generatePatternSummary>>,
+  TError,
+  { data: BodyType<RegenerateBody> },
+  TContext
+> => {
+  return useMutation(getGeneratePatternSummaryMutationOptions(options));
+};
 
 /**
  * @summary Get dashboard summary data

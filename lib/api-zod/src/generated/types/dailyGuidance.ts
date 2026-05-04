@@ -8,8 +8,6 @@
 
 export interface DailyGuidance {
   id: number;
-  userId: number;
-  date: string;
   theme: string;
   bestUse: string;
   avoid: string;
@@ -23,5 +21,7 @@ export interface DailyGuidance {
   journalPrompt: string;
   ritual: string;
   isAiGenerated: boolean;
+  promptVersion?: string;
+  cached?: boolean;
   createdAt?: Date;
 }

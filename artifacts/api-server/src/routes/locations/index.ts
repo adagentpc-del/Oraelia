@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, usersTable, locationProfilesTable } from "@workspace/db";
 import { CreateLocationBody, UpdateLocationBody, GetLocationParams, UpdateLocationParams, DeleteLocationParams, GenerateLocationStrategyParams } from "@workspace/api-zod";
+import { generateContent, getCachedContent } from "../../lib/ai-engine";
 
 const router: IRouter = Router();
 
@@ -62,48 +63,36 @@ router.post("/locations/:id/strategy", async (req, res): Promise<void> => {
   const [loc] = await db.select().from(locationProfilesTable).where(eq(locationProfilesTable.id, params.data.id));
   if (!loc) { res.status(404).json({ error: "Location not found" }); return; }
 
-  const goalStrategies: Record<string, { bestUse: string; whatToDo: string; whatNotToDo: string; bestTimingStyle: string; recommendedPurpose: string }> = {
-    love: {
-      bestUse: `${loc.city} holds romantic and relational energy for you. This is a place to open your heart and explore connection.`,
-      whatToDo: "Explore social settings, attend cultural events, and be open to meeting new people. Practice vulnerability and presence.",
-      whatNotToDo: "Avoid isolating yourself or bringing old relational patterns into new spaces. Do not rush connections.",
-      bestTimingStyle: "Venus transits and new moon phases are ideal for love-focused visits. Stay at least two weeks for meaningful connections.",
-      recommendedPurpose: "Romantic exploration, deepening existing relationships, or healing heart wounds.",
-    },
-    money: {
-      bestUse: `${loc.city} supports your financial growth and professional visibility. Treat time here as an investment.`,
-      whatToDo: "Network strategically, attend industry events, and present your work with confidence. Follow up on every connection.",
-      whatNotToDo: "Avoid overspending to impress. Do not confuse social activity with productive networking.",
-      bestTimingStyle: "Jupiter and Saturn transits favor financial moves here. Plan business trips during waxing moon phases.",
-      recommendedPurpose: "Business development, career advancement, or launching financial ventures.",
-    },
-    visibility: {
-      bestUse: `${loc.city} amplifies your presence and helps you be seen. This is your stage.`,
-      whatToDo: "Share your work publicly, attend events where you can be noticed, and practice being visible without apologizing for it.",
-      whatNotToDo: "Avoid hiding or playing small. Do not dim your light to make others comfortable.",
-      bestTimingStyle: "Full moon periods and Leo season are powerful for visibility work. Short, high-impact visits work best.",
-      recommendedPurpose: "Public speaking, launches, personal branding, and creative showcasing.",
-    },
-    healing: {
-      bestUse: `${loc.city} is a restorative space for you. Come here when you need to recover, reflect, and rebuild.`,
-      whatToDo: "Seek healing practitioners, spend time in nature, rest deeply, and journal extensively.",
-      whatNotToDo: "Avoid filling your schedule. Do not bring work stress into this healing space.",
-      bestTimingStyle: "Waning moon phases and Pisces season support deep healing. Stay for extended periods when possible.",
-      recommendedPurpose: "Physical recovery, emotional processing, spiritual retreats, and nervous system regulation.",
-    },
-    rest: {
-      bestUse: `${loc.city} is your sanctuary. This is where you come to simply be, without agenda or ambition.`,
-      whatToDo: "Sleep deeply, eat well, move gently, disconnect from obligations, and let boredom lead you to creativity.",
-      whatNotToDo: "Avoid screens, deadlines, and people who drain your energy. Do not feel guilty for doing nothing.",
-      bestTimingStyle: "Visit during your personal low-energy periods. Seasonal transitions are especially powerful for rest resets.",
-      recommendedPurpose: "Complete restoration, creative incubation, and reconnecting with your body's natural rhythms.",
-    },
-  };
+  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
+  if (!user) { res.status(400).json({ error: "No user found" }); return; }
 
-  const strategy = goalStrategies[loc.locationGoal] || goalStrategies["rest"];
+  const forceRegenerate = req.body?.regenerate === true;
 
+  const extraContext = [
+    `== LOCATION PROFILE ==`,
+    `City: ${loc.city}`,
+    `Country: ${loc.country}`,
+    `Type: ${loc.locationType}`,
+    `Goal: ${loc.locationGoal}`,
+  ].join("\n");
+
+  const result = await generateContent({
+    userId: user.id,
+    type: "location_strategy",
+    referenceId: loc.id,
+    extraContext,
+    forceRegenerate,
+  });
+
+  const strategy = result.content as Record<string, string>;
   const [updated] = await db.update(locationProfilesTable)
-    .set(strategy)
+    .set({
+      bestUse: strategy.bestUse,
+      whatToDo: strategy.whatToDo,
+      whatNotToDo: strategy.whatNotToDo,
+      bestTimingStyle: strategy.bestTimingStyle,
+      recommendedPurpose: strategy.recommendedPurpose,
+    })
     .where(eq(locationProfilesTable.id, params.data.id))
     .returning();
 

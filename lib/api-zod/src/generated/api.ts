@@ -306,8 +306,6 @@ export const GetCheckinResponse = zod.object({
  */
 export const GetTodayGuidanceResponse = zod.object({
   id: zod.number(),
-  userId: zod.number(),
-  date: zod.string(),
   theme: zod.string(),
   bestUse: zod.string(),
   avoid: zod.string(),
@@ -321,16 +319,20 @@ export const GetTodayGuidanceResponse = zod.object({
   journalPrompt: zod.string(),
   ritual: zod.string(),
   isAiGenerated: zod.boolean(),
+  promptVersion: zod.string().optional(),
+  cached: zod.boolean().optional(),
   createdAt: zod.coerce.date().optional(),
 });
 
 /**
  * @summary Generate daily guidance
  */
+export const GenerateDailyGuidanceBody = zod.object({
+  regenerate: zod.boolean().optional(),
+});
+
 export const GenerateDailyGuidanceResponse = zod.object({
   id: zod.number(),
-  userId: zod.number(),
-  date: zod.string(),
   theme: zod.string(),
   bestUse: zod.string(),
   avoid: zod.string(),
@@ -344,6 +346,59 @@ export const GenerateDailyGuidanceResponse = zod.object({
   journalPrompt: zod.string(),
   ritual: zod.string(),
   isAiGenerated: zod.boolean(),
+  promptVersion: zod.string().optional(),
+  cached: zod.boolean().optional(),
+  createdAt: zod.coerce.date().optional(),
+});
+
+/**
+ * @summary Generate weekly guidance
+ */
+export const GenerateWeeklyGuidanceBody = zod.object({
+  regenerate: zod.boolean().optional(),
+});
+
+export const GenerateWeeklyGuidanceResponse = zod.object({
+  id: zod.number(),
+  weekTheme: zod.string(),
+  focus: zod.string(),
+  release: zod.string(),
+  careerStrategy: zod.string(),
+  relationshipFocus: zod.string(),
+  bodyWisdom: zod.string(),
+  energyMap: zod.string(),
+  weeklyRitual: zod.string(),
+  journalTheme: zod.string(),
+  goalStrategy: zod.string(),
+  isAiGenerated: zod.boolean(),
+  promptVersion: zod.string().optional(),
+  cached: zod.boolean().optional(),
+  createdAt: zod.coerce.date().optional(),
+});
+
+/**
+ * @summary Generate monthly guidance
+ */
+export const GenerateMonthlyGuidanceBody = zod.object({
+  regenerate: zod.boolean().optional(),
+});
+
+export const GenerateMonthlyGuidanceResponse = zod.object({
+  id: zod.number(),
+  monthTheme: zod.string(),
+  intention: zod.string(),
+  careerMonth: zod.string(),
+  relationshipMonth: zod.string(),
+  bodyMonth: zod.string(),
+  bestWeeks: zod.string(),
+  challenges: zod.string(),
+  opportunities: zod.string(),
+  moonGuidance: zod.string(),
+  monthlyRitual: zod.string(),
+  reflectionPrompt: zod.string(),
+  isAiGenerated: zod.boolean(),
+  promptVersion: zod.string().optional(),
+  cached: zod.boolean().optional(),
   createdAt: zod.coerce.date().optional(),
 });
 
@@ -562,6 +617,10 @@ export const GenerateRelationshipSummaryParams = zod.object({
   id: zod.coerce.number(),
 });
 
+export const GenerateRelationshipSummaryBody = zod.object({
+  regenerate: zod.boolean().optional(),
+});
+
 export const GenerateRelationshipSummaryResponse = zod.object({
   id: zod.number(),
   userId: zod.number(),
@@ -684,6 +743,10 @@ export const GenerateLocationStrategyParams = zod.object({
   id: zod.coerce.number(),
 });
 
+export const GenerateLocationStrategyBody = zod.object({
+  regenerate: zod.boolean().optional(),
+});
+
 export const GenerateLocationStrategyResponse = zod.object({
   id: zod.number(),
   userId: zod.number(),
@@ -781,6 +844,55 @@ export const GetPatternSummaryResponse = zod.object({
       createdAt: zod.coerce.date().optional(),
     }),
   ),
+  patternInsight: zod.string().nullish(),
+  recommendation: zod.string().nullish(),
+  aiGenerated: zod.boolean(),
+  cached: zod.boolean(),
+});
+
+/**
+ * @summary Generate AI pattern intelligence
+ */
+export const GeneratePatternSummaryBody = zod.object({
+  regenerate: zod.boolean().optional(),
+});
+
+export const GeneratePatternSummaryResponse = zod.object({
+  avgMood: zod.number(),
+  avgEnergy: zod.number(),
+  avgStress: zod.number(),
+  avgSleepQuality: zod.number(),
+  totalCheckins: zod.number(),
+  bestDayOfWeek: zod.string().nullish(),
+  worstDayOfWeek: zod.string().nullish(),
+  bestConditionsClarity: zod.string(),
+  bestConditionsCreativity: zod.string(),
+  bestConditionsConnection: zod.string(),
+  energyLeakageWarnings: zod.array(zod.string()),
+  weeklySummary: zod.string(),
+  recentCheckins: zod.array(
+    zod.object({
+      id: zod.number(),
+      userId: zod.number(),
+      date: zod.string(),
+      mood: zod.number(),
+      energy: zod.number(),
+      stress: zod.number(),
+      sleepQuality: zod.number(),
+      movement: zod.string().nullish(),
+      socialActivity: zod.string().nullish(),
+      cyclePhase: zod.string().nullish(),
+      notes: zod.string().nullish(),
+      whatHappened: zod.string().nullish(),
+      whatFeltAligned: zod.string().nullish(),
+      whatFeltDraining: zod.string().nullish(),
+      createdAt: zod.coerce.date().optional(),
+    }),
+  ),
+  patternInsight: zod.string().nullish(),
+  recommendation: zod.string().nullish(),
+  aiGenerated: zod.boolean(),
+  cached: zod.boolean(),
 });
 
 /**
@@ -793,8 +905,6 @@ export const GetDashboardSummaryResponse = zod.object({
   todayGuidance: zod
     .object({
       id: zod.number(),
-      userId: zod.number(),
-      date: zod.string(),
       theme: zod.string(),
       bestUse: zod.string(),
       avoid: zod.string(),
@@ -808,6 +918,8 @@ export const GetDashboardSummaryResponse = zod.object({
       journalPrompt: zod.string(),
       ritual: zod.string(),
       isAiGenerated: zod.boolean(),
+      promptVersion: zod.string().optional(),
+      cached: zod.boolean().optional(),
       createdAt: zod.coerce.date().optional(),
     })
     .optional(),

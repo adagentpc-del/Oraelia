@@ -206,10 +206,12 @@ export interface CreateCheckinBody {
   whatFeltDraining?: string | null;
 }
 
+export interface RegenerateBody {
+  regenerate?: boolean;
+}
+
 export interface DailyGuidance {
   id: number;
-  userId: number;
-  date: string;
   theme: string;
   bestUse: string;
   avoid: string;
@@ -223,6 +225,45 @@ export interface DailyGuidance {
   journalPrompt: string;
   ritual: string;
   isAiGenerated: boolean;
+  promptVersion?: string;
+  cached?: boolean;
+  createdAt?: string;
+}
+
+export interface WeeklyGuidance {
+  id: number;
+  weekTheme: string;
+  focus: string;
+  release: string;
+  careerStrategy: string;
+  relationshipFocus: string;
+  bodyWisdom: string;
+  energyMap: string;
+  weeklyRitual: string;
+  journalTheme: string;
+  goalStrategy: string;
+  isAiGenerated: boolean;
+  promptVersion?: string;
+  cached?: boolean;
+  createdAt?: string;
+}
+
+export interface MonthlyGuidance {
+  id: number;
+  monthTheme: string;
+  intention: string;
+  careerMonth: string;
+  relationshipMonth: string;
+  bodyMonth: string;
+  bestWeeks: string;
+  challenges: string;
+  opportunities: string;
+  moonGuidance: string;
+  monthlyRitual: string;
+  reflectionPrompt: string;
+  isAiGenerated: boolean;
+  promptVersion?: string;
+  cached?: boolean;
   createdAt?: string;
 }
 
@@ -434,6 +475,12 @@ export interface PatternSummary {
   energyLeakageWarnings: string[];
   weeklySummary: string;
   recentCheckins: DailyCheckin[];
+  /** @nullable */
+  patternInsight?: string | null;
+  /** @nullable */
+  recommendation?: string | null;
+  aiGenerated: boolean;
+  cached: boolean;
 }
 
 export interface DashboardSummary {
