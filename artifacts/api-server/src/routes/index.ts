@@ -18,6 +18,8 @@ import synastryRouter from "./synastry";
 import numerologyRouter from "./numerology";
 import humanDesignRouter from "./humanDesign";
 import decisionRouter from "./decision";
+import timingRouter from "./timing";
+import lifeEventsRouter from "./lifeEvents";
 
 const router: IRouter = Router();
 
@@ -40,5 +42,7 @@ router.use(synastryRouter);
 router.use(numerologyRouter);
 router.use(humanDesignRouter);
 router.use(decisionRouter);
+router.use(timingRouter);
+router.use(lifeEventsRouter);
 
 export default router;

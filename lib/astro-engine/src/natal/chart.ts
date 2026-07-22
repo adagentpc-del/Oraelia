@@ -26,13 +26,20 @@ import {
 } from "./zodiac";
 import {
   chartShape,
+  computeMidpoints,
   findAspects,
+  findDeclinationAspects,
   findPatterns,
+  findUnaspected,
   type Aspect,
   type AspectPattern,
   type BodyLongitude,
   type ChartShape,
+  type DeclinationAspect,
+  type MidpointEntry,
 } from "./aspects";
+import { traditionalAnalysis, type TraditionalAnalysis } from "./traditional";
+import { julianCenturies } from "../core/julian";
 
 export type Dignity = "domicile" | "exaltation" | "detriment" | "fall" | "peregrine";
 
@@ -79,10 +86,52 @@ export interface DispositorInfo {
   mutualReceptions: [Body, Body][];
 }
 
+export type Zodiac = "tropical" | "sidereal";
+
+export interface ChartOptions {
+  houseSystem?: HouseSystem;
+  /** Sidereal uses the Lahiri ayanamsa. */
+  zodiac?: Zodiac;
+}
+
+export interface CalculationMeta {
+  calculationEngine: string;
+  engineVersion: string;
+  methodVersion: string;
+  zodiac: Zodiac;
+  houseSystem: HouseSystem;
+  nodeType: "mean";
+  lilithType: "mean";
+  ayanamsaDegrees: number | null;
+  sourceHash: string;
+}
+
+export const CALCULATION_ENGINE = "oralia-astro-engine";
+export const ENGINE_VERSION = "1.1.0";
+export const METHOD_VERSION = "oralia-astrology-2";
+
+/** Lahiri ayanamsa, linear approximation (adequate for sign-level sidereal work). */
+export function lahiriAyanamsa(jd: number): number {
+  const t = julianCenturies(jd);
+  return 23.85675 + 1.396971 * t;
+}
+
+/** Deterministic FNV-1a hash of the calculation inputs. */
+export function sourceHash(input: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, "0");
+}
+
 export interface NatalChart {
   julianDay: number;
   isDayChart: boolean;
   houseSystem: HouseSystem;
+  zodiac: Zodiac;
+  meta: CalculationMeta;
   houses: HouseData;
   bodies: PlacedBody[];
   aspects: Aspect[];
@@ -98,6 +147,10 @@ export interface NatalChart {
   dominantPlanets: { body: Body; score: number }[];
   arabicParts: ArabicParts;
   moonPhase: { angle: number; name: string; illumination: number };
+  declinationAspects: DeclinationAspect[];
+  unaspectedPlanets: Body[];
+  midpoints: MidpointEntry[];
+  traditional: TraditionalAnalysis;
 }
 
 const CHART_BODIES: Body[] = ALL_BODIES;
@@ -164,11 +217,41 @@ function computeStrength(placed: Omit<PlacedBody, "strength">, aspects: Aspect[]
 
 export function computeNatalChart(
   moment: BirthMoment,
-  houseSystem: HouseSystem = "placidus",
+  optionsOrSystem: HouseSystem | ChartOptions = "placidus",
 ): NatalChart {
-  const jd = julianDayFromMoment(moment);
-  const positions = allPositions(jd, CHART_BODIES);
-  const houses = computeHouses(jd, moment.latitude, moment.longitude, houseSystem);
+  const options: ChartOptions =
+    typeof optionsOrSystem === "string" ? { houseSystem: optionsOrSystem } : optionsOrSystem;
+  return computeChartAt(julianDayFromMoment(moment), moment.latitude, moment.longitude, options);
+}
+
+/** Compute a full chart for any moment/place — used for natal, returns, and relocations. */
+export function computeChartAt(
+  jd: number,
+  latitude: number,
+  longitude: number,
+  options: ChartOptions = {},
+): NatalChart {
+  const houseSystem = options.houseSystem ?? "placidus";
+  const zodiac = options.zodiac ?? "tropical";
+  const ayanamsa = zodiac === "sidereal" ? lahiriAyanamsa(jd) : 0;
+
+  const tropicalPositions = allPositions(jd, CHART_BODIES);
+  const positions = {} as typeof tropicalPositions;
+  for (const b of CHART_BODIES) {
+    const p = tropicalPositions[b]!;
+    positions[b] = ayanamsa === 0 ? p : { ...p, longitude: norm360(p.longitude - ayanamsa) };
+  }
+  const tropicalHouses = computeHouses(jd, latitude, longitude, houseSystem);
+  const houses =
+    ayanamsa === 0
+      ? tropicalHouses
+      : {
+          ...tropicalHouses,
+          cusps: tropicalHouses.cusps.map((c) => norm360(c - ayanamsa)),
+          angles: Object.fromEntries(
+            Object.entries(tropicalHouses.angles).map(([k, v]) => [k, norm360(v - ayanamsa)]),
+          ) as unknown as typeof tropicalHouses.angles,
+        };
 
   const sun = positions.Sun!;
   const sunHouse = houseOf(sun.longitude, houses.cusps);
@@ -233,10 +316,41 @@ export function computeNatalChart(
     marriage: round(norm360(asc + houses.cusps[6]! - venus.longitude), 2),
   };
 
+  const declinationAspects = findDeclinationAspects(
+    bodies
+      .filter((b) => ["Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto"].includes(b.body))
+      .map((b) => ({ body: b.body, declination: b.declination })),
+  );
+  const unaspectedPlanets = findUnaspected(longitudesForAspects, aspects);
+  const midpoints = computeMidpoints([
+    ...bodies
+      .filter((b) => AVERAGE_SPEED[b.body] !== undefined)
+      .map((b) => ({ name: b.body as string, longitude: b.longitude })),
+    { name: "Ascendant", longitude: houses.angles.ascendant },
+    { name: "Midheaven", longitude: houses.angles.midheaven },
+  ]);
+  const traditional = traditionalAnalysis(bodies, isDayChart);
+
+  const meta: CalculationMeta = {
+    calculationEngine: CALCULATION_ENGINE,
+    engineVersion: ENGINE_VERSION,
+    methodVersion: METHOD_VERSION,
+    zodiac,
+    houseSystem,
+    nodeType: "mean",
+    lilithType: "mean",
+    ayanamsaDegrees: ayanamsa === 0 ? null : round(ayanamsa, 4),
+    sourceHash: sourceHash(
+      `${jd.toFixed(6)}|${latitude.toFixed(4)}|${longitude.toFixed(4)}|${houseSystem}|${zodiac}|${METHOD_VERSION}`,
+    ),
+  };
+
   return {
     julianDay: jd,
     isDayChart,
     houseSystem,
+    zodiac,
+    meta,
     houses,
     bodies,
     aspects,
@@ -252,7 +366,25 @@ export function computeNatalChart(
     dominantPlanets,
     arabicParts,
     moonPhase: moonPhase(jd),
+    declinationAspects,
+    unaspectedPlanets,
+    midpoints,
+    traditional,
   };
+}
+
+/**
+ * Draconic chart: every point rotated so the North Node sits at 0° Aries.
+ * Reveals the "soul-level" layer beneath the tropical personality chart.
+ */
+export function draconicPositions(chart: NatalChart): { body: Body; longitude: number; sign: Sign }[] {
+  const node = chart.bodies.find((b) => b.body === "NorthNode")!;
+  return chart.bodies
+    .filter((b) => b.body !== "NorthNode" && b.body !== "SouthNode")
+    .map((b) => {
+      const lon = norm360(b.longitude - node.longitude);
+      return { body: b.body, longitude: round(lon, 2), sign: signOf(lon) };
+    });
 }
 
 const ELEMENT_TO_SIGNS: Record<Element, Sign[]> = {

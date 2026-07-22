@@ -1,0 +1,36 @@
+# Changelog
+
+## [Unreleased] — Oralia 2.0/3.0 engine build (branch `claude/oralia-astrology-ios-app-z5y48p`)
+
+### Added
+- `lib/astro-engine`: zero-dependency deterministic computation library —
+  ephemeris (planets/Moon/Chiron/nodes/Lilith), Placidus/Whole-Sign/Equal/
+  Porphyry houses, tropical + sidereal (Lahiri) zodiacs, draconic positions,
+  dignities, dispositors, sect + traditional layer (triplicities, joys,
+  benefics/malefics of sect), aspect engine with patterns, declination
+  parallels, midpoints, unaspected planets, Arabic Parts, chart shapes.
+- Timing: transits, transit-event arcs with retrograde passes, annual/monthly
+  profections, solar & lunar return charts (relocatable, with natal overlay),
+  secondary progressions, solar arcs, lunations with validated eclipse
+  detection, planetary hours, daily category scoring.
+- Astrocartography (lines, relocation, 80 scored cities), synastry (with
+  unknown-birth-time safety and data-quality limitations), full numerology
+  (core + extended: karmic lessons, hidden passion, cornerstone/capstone,
+  Chaldean comparison, essence cycles, launch-date optimization), Human Design
+  (gates/channels/centers, type/strategy/authority, variables), decision
+  engine, deep-dive interpretation content, 7 life-area reports with the
+  10-part interpretation standard (evidence, higher/lower expression,
+  confidence labels, disclaimers).
+- API: 11 new route modules (natal incl. compare/draconic, forecast, timing,
+  returns, astromap, synastry, numerology, human-design, decision,
+  life-events with longitudinal pattern scans, birth-location).
+- DB: birth coordinates + `birth_time_confidence` on profiles, coordinates on
+  relationship_profiles, new `life_events` table.
+- Native SwiftUI iOS app (`apps/ios`) with 10 screens.
+- Governance docs (`docs/`), ADRs 0001–0003, 55-test golden-fixture suite
+  including the Alyssa QA fixture.
+
+### Fixed
+- Pre-existing workspace typecheck failures: api-zod barrel type-shadowing,
+  p-retry v7 `AbortError` import, missing `@types/node`/`react` dev deps,
+  OpenAI image `response.data` optionality, chakras page `queryKey`.

@@ -32,7 +32,10 @@ router.post("/synastry", async (req, res): Promise<void> => {
   }
   const chartA = computeNatalChart(birth.moment);
   const chartB = computeNatalChart(partner);
-  const result = synastryFromCharts(chartA, chartB, birth.moment, partner);
+  const result = synastryFromCharts(chartA, chartB, birth.moment, partner, {
+    timeKnownA: Boolean(birth.moment.time),
+    timeKnownB: Boolean(partner.time),
+  });
   res.json({ synastry: result });
 });
 
@@ -69,7 +72,10 @@ router.get("/synastry/relationship/:id", async (req, res): Promise<void> => {
   };
   const chartA = computeNatalChart(birth.moment);
   const chartB = computeNatalChart(partner);
-  const result = synastryFromCharts(chartA, chartB, birth.moment, partner);
+  const result = synastryFromCharts(chartA, chartB, birth.moment, partner, {
+    timeKnownA: Boolean(birth.moment.time),
+    timeKnownB: Boolean(rel.birthTime),
+  });
   res.json({
     personName: rel.personName,
     relationshipType: rel.relationshipType,

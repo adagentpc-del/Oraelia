@@ -285,6 +285,143 @@ export function optimizeLaunchDate(
   return results.sort((a, b) => b.score - a.score);
 }
 
+// ---------------------------------------------------------------------------
+// Extended name analysis (v3): karmic lessons, hidden passion, cornerstone,
+// balance, subconscious self, rational thought, Chaldean comparison, essences.
+// ---------------------------------------------------------------------------
+
+/** Chaldean letter values (no letter maps to 9, which is held sacred). */
+const CHALDEAN_VALUES: Record<string, number> = {
+  a: 1, i: 1, j: 1, q: 1, y: 1,
+  b: 2, k: 2, r: 2,
+  c: 3, g: 3, l: 3, s: 3,
+  d: 4, m: 4, t: 4,
+  e: 5, h: 5, n: 5, x: 5,
+  u: 6, v: 6, w: 6,
+  o: 7, z: 7,
+  f: 8, p: 8,
+};
+
+export type YTreatment = "auto" | "vowel" | "consonant";
+
+function isVowelLetter(letter: string, word: string, treatment: YTreatment): boolean {
+  if (letter !== "y") return VOWELS.has(letter);
+  if (treatment === "vowel") return true;
+  if (treatment === "consonant") return false;
+  // auto: treat y as a vowel when the word has no other vowel.
+  return !word.split("").some((l) => VOWELS.has(l));
+}
+
+export interface ExtendedNameAnalysis {
+  /** Digits 1-9 absent from the name — lessons the life keeps re-teaching. */
+  karmicLessons: number[];
+  /** Most frequent letter value — an intense, driving talent. */
+  hiddenPassion: number;
+  /** Sum of the initials of each name part. */
+  balance: number;
+  /** 9 minus the count of karmic lessons — resilience under crisis. */
+  subconsciousSelf: number;
+  /** First name total plus birth day — habitual thinking style. */
+  rationalThought: number;
+  cornerstone: string;
+  capstone: string;
+  firstVowel: string;
+  /** Pythagorean vs Chaldean expression numbers for comparison. */
+  pythagoreanExpression: number;
+  chaldeanExpression: number;
+  /** Letter-by-letter arithmetic so users can verify by hand. */
+  workings: { letter: string; value: number }[];
+}
+
+export function extendedNameAnalysis(
+  fullName: string,
+  birthDate: string,
+  yTreatment: YTreatment = "auto",
+): ExtendedNameAnalysis {
+  const words = fullName.toLowerCase().split(/[^a-z]+/).filter(Boolean);
+  const letters = lettersOf(fullName);
+  const values = letters.map((l) => LETTER_VALUES[l] ?? 0);
+
+  const present = new Set(values);
+  const karmicLessons = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter((n) => !present.has(n));
+
+  const counts = new Map<number, number>();
+  for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1);
+  const hiddenPassion = [...counts.entries()].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0]?.[0] ?? 0;
+
+  const initials = words.map((w) => LETTER_VALUES[w[0]!] ?? 0);
+  const balance = reduceNumber(initials.reduce((s, v) => s + v, 0), false);
+
+  const subconsciousSelf = 9 - karmicLessons.length;
+
+  const { day } = (() => {
+    const [y, m, d] = birthDate.split("-").map((s) => parseInt(s, 10));
+    void y; void m;
+    return { day: d ?? 1 };
+  })();
+  const firstName = words[0] ?? "";
+  const firstNameSum = firstName.split("").reduce((s, l) => s + (LETTER_VALUES[l] ?? 0), 0);
+  const rationalThought = reduceNumber(firstNameSum + day);
+
+  let firstVowelChar = "";
+  outer: for (const word of words) {
+    for (const letter of word) {
+      if (isVowelLetter(letter, word, yTreatment)) {
+        firstVowelChar = letter;
+        break outer;
+      }
+    }
+  }
+
+  const chaldeanSum = letters.reduce((s, l) => s + (CHALDEAN_VALUES[l] ?? 0), 0);
+
+  return {
+    karmicLessons,
+    hiddenPassion,
+    balance,
+    subconsciousSelf,
+    rationalThought,
+    cornerstone: (firstName[0] ?? "").toUpperCase(),
+    capstone: (firstName[firstName.length - 1] ?? "").toUpperCase(),
+    firstVowel: firstVowelChar.toUpperCase(),
+    pythagoreanExpression: reduceNumber(values.reduce((s, v) => s + v, 0)),
+    chaldeanExpression: reduceNumber(chaldeanSum),
+    workings: letters.map((l) => ({ letter: l.toUpperCase(), value: LETTER_VALUES[l] ?? 0 })),
+  };
+}
+
+export interface EssencePeriod {
+  age: number;
+  essence: number;
+  activeLetters: string[];
+}
+
+/**
+ * Essence cycles: each letter of each name part is active for as many years
+ * as its value; the essence at an age is the sum of the active letters.
+ */
+export function essenceAtAge(fullName: string, age: number): EssencePeriod {
+  const words = fullName.toLowerCase().split(/[^a-z]+/).filter(Boolean);
+  const activeLetters: string[] = [];
+  let essence = 0;
+  for (const word of words) {
+    const letters = word.split("").filter((l) => LETTER_VALUES[l]);
+    if (!letters.length) continue;
+    let cursor = 0;
+    let remaining = age;
+    for (let guard = 0; guard < 200; guard++) {
+      const value = LETTER_VALUES[letters[cursor % letters.length]!]!;
+      if (remaining < value) break;
+      remaining -= value;
+      cursor++;
+    }
+    const active = letters[cursor % letters.length]!;
+    activeLetters.push(active.toUpperCase());
+    essence += LETTER_VALUES[active]!;
+  }
+  return { age, essence: reduceNumber(essence), activeLetters };
+}
+
 export const NUMBER_MEANINGS: Record<number, { title: string; strengths: string; shadow: string; career: string }> = {
   1: {
     title: "The Pioneer",

@@ -19,7 +19,16 @@ export interface LifeReport {
   sections: { heading: string; content: string }[];
   evidence: string[];
   actions: string[];
+  higherExpression: string;
+  lowerExpression: string;
+  reflectionQuestions: string[];
+  /** Interpretation confidence label per the Oralia standard (not a probability). */
+  confidence: "high" | "moderate" | "exploratory";
+  disclaimer: string;
 }
+
+const GENERAL_DISCLAIMER =
+  "Oralia's interpretations describe tendencies and timing conditions from symbolic systems, not proven causal facts or fixed fate.";
 
 function placed(chart: NatalChart, body: Body): PlacedBody {
   return chart.bodies.find((b) => b.body === body)!;
@@ -96,6 +105,16 @@ export function loveReport(chart: NatalChart): LifeReport {
       `Notice your "type" repeating — it's a ${seventhPlanets[0]?.body ?? chart.ascendantSign} pattern asking to be integrated, not just dated.`,
       "Schedule pleasure without productivity attached: Venus atrophies in an optimized life.",
     ],
+    higherExpression: `Loving in ${venus.sign}'s language while consciously meeting Moon-in-${moon.sign} needs — chosen partnership rather than magnetic repetition.`,
+    lowerExpression: hardVenus.length
+      ? "Repeating the wound: choosing partners who confirm the old story, then calling it fate."
+      : "Coasting on natural charm without ever risking real vulnerability.",
+    reflectionQuestions: [
+      `What does Moon-in-${moon.sign} you need that you have never said out loud to a partner?`,
+      "Which past relationship pattern would you least like to repeat — and what was your role in it?",
+    ],
+    confidence: "moderate",
+    disclaimer: `${GENERAL_DISCLAIMER} Compatibility analysis describes dynamics, not certainties about another person's feelings.`,
   };
 }
 
@@ -151,6 +170,14 @@ export function careerReport(chart: NatalChart): LifeReport {
       `Choose the decade skill: the ${dom?.body ?? "chart"}-aligned craft you'll still be compounding at your Saturn return.`,
       "Put your name on your work; anonymous excellence doesn't feed a Midheaven.",
     ],
+    higherExpression: `Public work that runs on ${mcSign} qualities and ${dom?.body ?? "your strongest planet"}'s engine — reputation compounding around genuine mastery.`,
+    lowerExpression: "Climbing a borrowed ladder: optimizing a career your chart never asked for, then wondering why arrival feels empty.",
+    reflectionQuestions: [
+      "Whose definition of success are you actually pursuing?",
+      `If your work had to be more ${mcSign} to succeed, what would change first?`,
+    ],
+    confidence: "moderate",
+    disclaimer: GENERAL_DISCLAIMER,
   };
 }
 
@@ -201,6 +228,14 @@ export function moneyReport(chart: NatalChart): LifeReport {
       `Automate the ${SIGN_DEEP_DIVES[venus.sign].moneyStyle.toLowerCase().includes("spend") ? "saving before the spending" : "investing pipeline"} — your chart's leaks are predictable, so engineer around them.`,
       "Add one ownership position this year: equity, IP, or property. Wages alone don't satisfy a chart with money houses this configured.",
     ],
+    higherExpression: `Wealth built through ${jupiter.sign}-style expansion with clean agreements and conscious money psychology — owning assets instead of renting time.`,
+    lowerExpression: "Money as scorekeeping or anesthetic: earning to soothe the wound instead of healing it, leaking value through unexamined patterns.",
+    reflectionQuestions: [
+      "What did you learn about money before age ten, and is it still running the show?",
+      "What do you produce that could earn while you sleep?",
+    ],
+    confidence: "moderate",
+    disclaimer: `${GENERAL_DISCLAIMER} This is not regulated financial advice; consult qualified professionals for investment decisions.`,
   };
 }
 
@@ -251,6 +286,14 @@ export function fameReport(chart: NatalChart): LifeReport {
       `Pick one channel that rewards ${SIGN_DEEP_DIVES[chart.ascendantSign].communicationStyle.split(";")[0]!.toLowerCase()} and publish weekly for a year.`,
       "Attach your visibility to a body of work, not a personality feed.",
     ],
+    higherExpression: "Visibility attached to mastery: an audience earned by consistent, excellent, signed work — authority that compounds.",
+    lowerExpression: "Visibility as validation-hunting: reach without a body of work behind it, which decays as fast as it grows.",
+    reflectionQuestions: [
+      "What do you want to be known FOR — in one sentence?",
+      "Which fear is actually keeping you smaller than your work deserves?",
+    ],
+    confidence: "exploratory",
+    disclaimer: `${GENERAL_DISCLAIMER} No chart guarantees fame; this describes how visibility flows most naturally for you.`,
   };
 }
 
@@ -289,6 +332,14 @@ export function familyReport(chart: NatalChart): LifeReport {
       "Interview the elders you still can; pattern-mapping three generations is the cheapest therapy available.",
       `Make your physical home serve Moon-in-${moon.sign}: it is not decoration, it is nervous-system infrastructure.`,
     ],
+    higherExpression: "Becoming the ancestor you needed: converting the inherited pattern into a conscious foundation others can stand on.",
+    lowerExpression: "Recreating the familiar and calling it fate — or exiling the family story instead of metabolizing it.",
+    reflectionQuestions: [
+      "What family pattern stops with you?",
+      "Does your current home restore you or drain you — and what one change would shift that?",
+    ],
+    confidence: "moderate",
+    disclaimer: GENERAL_DISCLAIMER,
   };
 }
 
@@ -327,6 +378,14 @@ export function healthReport(chart: NatalChart): LifeReport {
       `Choose movement that matches Mars in ${mars.sign} so you'll actually do it.`,
       "Track energy against your check-ins; your patterns section will show which inputs actually move your baseline.",
     ],
+    higherExpression: `A ${el}-literate routine: energy managed by design rather than crisis, with stress metabolized through the right kind of movement and rest.`,
+    lowerExpression: "Running the constitution against its grain until the body files a formal complaint.",
+    reflectionQuestions: [
+      "What would your body say if it wrote you a memo this week?",
+      "Which daily habit is quietly compounding against you?",
+    ],
+    confidence: "exploratory",
+    disclaimer: "This section is reflective and educational, not medical advice or diagnosis. Consult qualified professionals for health decisions.",
   };
 }
 
@@ -367,6 +426,14 @@ export function spiritualityReport(chart: NatalChart): LifeReport {
       `When stuck, ask: "What would the ${northNode.sign} version of me do?" — then do 10% of it.`,
       "Make one North-Node-direction decision per quarter and journal what follows.",
     ],
+    higherExpression: `Living toward ${northNode.sign}: the unfamiliar direction that produces growth and the sensation of a life on-purpose.`,
+    lowerExpression: `Defaulting to ${southNode.sign} competence: safe, skilled, comfortable — and slowly stale.`,
+    reflectionQuestions: [
+      `Where are you over-relying on your ${southNode.sign} gifts to avoid your ${northNode.sign} growth?`,
+      "What would you do differently this year if you fully trusted the direction your life keeps pointing?",
+    ],
+    confidence: "exploratory",
+    disclaimer: `${GENERAL_DISCLAIMER} Evolutionary interpretation is one school among several, offered as a lens rather than a fact.`,
   };
 }
 

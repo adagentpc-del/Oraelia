@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db, usersTable, profilesTable } from "@workspace/db";
-import type { BirthMoment } from "@workspace/astro-engine";
+import { assessDataQuality, type BirthMoment, type DataQuality } from "@workspace/astro-engine";
 
 export interface ResolvedBirth {
   moment: BirthMoment;
@@ -9,6 +9,7 @@ export interface ResolvedBirth {
   /** True when coordinates were defaulted rather than stored. */
   approximateLocation: boolean;
   userId: number;
+  dataQuality: DataQuality;
 }
 
 const DEFAULT_LAT = 40.7128;
@@ -38,5 +39,10 @@ export async function resolveBirth(): Promise<ResolvedBirth | null> {
     fullName: profile.fullName,
     approximateLocation: !hasCoords,
     userId: user.id,
+    dataQuality: assessDataQuality({
+      birthTimeConfidence: profile.birthTimeConfidence,
+      hasTime: Boolean(profile.birthTime),
+      hasCoordinates: hasCoords,
+    }),
   };
 }

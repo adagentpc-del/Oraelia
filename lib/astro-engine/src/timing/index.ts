@@ -16,7 +16,7 @@ import { angularSeparation, norm360, round, clamp } from "../core/math";
 import { houseOf } from "../core/houses";
 import { findAspects, type Aspect, type BodyLongitude } from "../natal/aspects";
 import { TRADITIONAL_RULERS, SIGNS, signOf, type Sign } from "../natal/zodiac";
-import type { NatalChart } from "../natal/chart";
+import { computeChartAt, type NatalChart } from "../natal/chart";
 
 // ---------------------------------------------------------------------------
 // Transits
@@ -206,6 +206,183 @@ export function solarArcDirections(chart: NatalChart, ageYears: number): Progres
         changedSign: signOf(directed) !== b.sign,
       };
     });
+}
+
+// ---------------------------------------------------------------------------
+// Transit event arcs (exact hits, retrograde revisits)
+// ---------------------------------------------------------------------------
+
+export interface TransitEvent {
+  transiting: Body;
+  natal: Body | "Ascendant" | "Midheaven";
+  aspect: "conjunction" | "opposition" | "square" | "trine" | "sextile";
+  date: string;
+  retrograde: boolean;
+  /** 1 = first contact, 2 = retrograde revisit, 3 = final pass, ... */
+  pass: number;
+}
+
+const EVENT_ASPECTS: { type: TransitEvent["aspect"]; angle: number }[] = [
+  { type: "conjunction", angle: 0 },
+  { type: "sextile", angle: 60 },
+  { type: "square", angle: 90 },
+  { type: "trine", angle: 120 },
+  { type: "opposition", angle: 180 },
+];
+
+const SLOW_BODIES: Body[] = ["Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "Chiron"];
+
+/**
+ * Scan a window for exact transit hits from the slow planets to natal points,
+ * numbering multiple passes of the same contact (direct → retrograde → direct).
+ */
+export function transitEvents(chart: NatalChart, fromJd: number, days: number): TransitEvent[] {
+  const natalPoints: { name: TransitEvent["natal"]; longitude: number }[] = [
+    ...chart.bodies
+      .filter((b) => ["Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune", "Pluto", "Chiron", "NorthNode"].includes(b.body))
+      .map((b) => ({ name: b.body as TransitEvent["natal"], longitude: b.longitude })),
+    { name: "Ascendant", longitude: chart.houses.angles.ascendant },
+    { name: "Midheaven", longitude: chart.houses.angles.midheaven },
+  ];
+
+  const step = 1; // days
+  const maxDays = Math.min(days, 730);
+  const events: TransitEvent[] = [];
+
+  for (const body of SLOW_BODIES) {
+    // Pre-sample positions once per body.
+    const samples: { jd: number; lon: number; speed: number }[] = [];
+    for (let d = 0; d <= maxDays; d += step) {
+      const pos = bodyPosition(body, fromJd + d);
+      samples.push({ jd: fromJd + d, lon: pos.longitude, speed: pos.speed });
+    }
+    for (const point of natalPoints) {
+      for (const { type, angle } of EVENT_ASPECTS) {
+        const passCounter = { count: 0 };
+        for (let i = 1; i < samples.length; i++) {
+          const prev = samples[i - 1]!;
+          const cur = samples[i]!;
+          // Signed offset from exactness, in (-180, 180].
+          const offPrev = signedOffset(prev.lon, point.longitude, angle);
+          const offCur = signedOffset(cur.lon, point.longitude, angle);
+          if (Math.sign(offPrev) !== Math.sign(offCur) && Math.abs(offPrev) < 5 && Math.abs(offCur) < 5) {
+            const frac = Math.abs(offPrev) / (Math.abs(offPrev) + Math.abs(offCur) || 1);
+            const exactJd = prev.jd + frac * step;
+            passCounter.count += 1;
+            events.push({
+              transiting: body,
+              natal: point.name,
+              aspect: type,
+              date: dateFromJulianDay(exactJd).toISOString().slice(0, 10),
+              retrograde: cur.speed < 0,
+              pass: passCounter.count,
+            });
+          }
+        }
+      }
+    }
+  }
+  return events.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function signedOffset(transitLon: number, natalLon: number, aspectAngle: number): number {
+  // Distance from the nearest exact aspect point (either side of natal).
+  const diff = norm360(transitLon - natalLon);
+  const d1 = ((diff - aspectAngle + 540) % 360) - 180;
+  const d2 = ((diff + aspectAngle + 540) % 360) - 180;
+  return Math.abs(d1) <= Math.abs(d2) ? d1 : d2;
+}
+
+// ---------------------------------------------------------------------------
+// Return charts (solar & lunar) with natal overlay
+// ---------------------------------------------------------------------------
+
+export interface ReturnChartResult {
+  kind: "solar" | "lunar";
+  returnDate: string;
+  chart: NatalChart;
+  /** Return planets located in the NATAL houses (the overlay). */
+  overlay: { body: Body; natalHouse: number }[];
+  annualAscendant: string;
+  annualMidheaven: string;
+  angularPlanets: Body[];
+  themes: string[];
+}
+
+function buildReturnResult(
+  kind: "solar" | "lunar",
+  returnJd: number,
+  natal: NatalChart,
+  latitude: number,
+  longitude: number,
+): ReturnChartResult {
+  const chart = computeChartAt(returnJd, latitude, longitude, {
+    houseSystem: natal.houseSystem,
+    zodiac: natal.zodiac,
+  });
+  const overlay = chart.bodies
+    .filter((b) => PLANETARY_BODIES.includes(b.body))
+    .map((b) => ({ body: b.body, natalHouse: houseOf(b.longitude, natal.houses.cusps) }));
+  const angularPlanets = chart.bodies.filter((b) => b.angular && PLANETARY_BODIES.includes(b.body)).map((b) => b.body);
+  const themes: string[] = [];
+  const sunHouse = chart.bodies.find((b) => b.body === "Sun")?.house;
+  if (sunHouse) {
+    themes.push(
+      `${kind === "solar" ? "Year" : "Month"} centers on house ${sunHouse} themes at the return location.`,
+    );
+  }
+  if (angularPlanets.length) {
+    themes.push(`Angular at the return: ${angularPlanets.join(", ")} — these planets set the period's tone.`);
+  }
+  const moonSign = chart.bodies.find((b) => b.body === "Moon")?.sign;
+  if (moonSign) themes.push(`Return Moon in ${moonSign}: the emotional weather of the period.`);
+  return {
+    kind,
+    returnDate: dateFromJulianDay(returnJd).toISOString(),
+    chart,
+    overlay,
+    annualAscendant: formatSignDeg(chart.houses.angles.ascendant),
+    annualMidheaven: formatSignDeg(chart.houses.angles.midheaven),
+    angularPlanets,
+    themes,
+  };
+}
+
+function formatSignDeg(longitude: number): string {
+  return `${Math.floor(norm360(longitude) % 30)}° ${signOf(longitude)}`;
+}
+
+export function solarReturnChart(
+  natal: NatalChart,
+  year: number,
+  latitude: number,
+  longitude: number,
+): ReturnChartResult {
+  const natalSun = natal.bodies.find((b) => b.body === "Sun")!;
+  const birthDate = dateFromJulianDay(natal.julianDay);
+  const guess = julianDayFromDate(
+    new Date(Date.UTC(year, birthDate.getUTCMonth(), birthDate.getUTCDate(), 12)),
+  );
+  // For sidereal charts the stored natal Sun is ayanamsa-shifted; return-finding
+  // must work in tropical terms, so recover the tropical longitude.
+  const shift = natal.meta.ayanamsaDegrees ?? 0;
+  const jd = findReturn("Sun", norm360(natalSun.longitude + shift), guess);
+  return buildReturnResult("solar", jd, natal, latitude, longitude);
+}
+
+export function lunarReturnChart(
+  natal: NatalChart,
+  fromJd: number,
+  latitude: number,
+  longitude: number,
+): ReturnChartResult {
+  const natalMoon = natal.bodies.find((b) => b.body === "Moon")!;
+  const shift = natal.meta.ayanamsaDegrees ?? 0;
+  const target = norm360(natalMoon.longitude + shift);
+  const current = bodyPosition("Moon", fromJd);
+  const gap = norm360(target - current.longitude);
+  const jd = findReturn("Moon", target, fromJd + gap / 13.176);
+  return buildReturnResult("lunar", jd, natal, latitude, longitude);
 }
 
 // ---------------------------------------------------------------------------

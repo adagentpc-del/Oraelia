@@ -1,7 +1,7 @@
 import { asinDeg, atan2Deg, cosDeg, norm360, sinDeg, tanDeg } from "./math";
 import { lst, meanObliquity } from "./julian";
 
-export type HouseSystem = "placidus" | "whole-sign";
+export type HouseSystem = "placidus" | "whole-sign" | "equal" | "porphyry";
 
 export interface Angles {
   ascendant: number;
@@ -121,6 +121,10 @@ function wholeSignCusps(ascendant: number): number[] {
   return Array.from({ length: 12 }, (_, i) => norm360(startSign + i * 30));
 }
 
+function equalCusps(ascendant: number): number[] {
+  return Array.from({ length: 12 }, (_, i) => norm360(ascendant + i * 30));
+}
+
 export interface HouseData {
   system: HouseSystem;
   /** 12 cusp longitudes; cusps[0] is the 1st-house cusp. */
@@ -138,7 +142,11 @@ export function computeHouses(
   const cusps =
     system === "whole-sign"
       ? wholeSignCusps(angles.ascendant)
-      : placidusCusps(jd, latitude, longitude, angles);
+      : system === "equal"
+        ? equalCusps(angles.ascendant)
+        : system === "porphyry"
+          ? porphyryCusps(angles)
+          : placidusCusps(jd, latitude, longitude, angles);
   return { system, cusps, angles };
 }
 

@@ -335,6 +335,77 @@ export function findPatterns(positions: BodyLongitude[], aspects: Aspect[]): Asp
 }
 
 // ---------------------------------------------------------------------------
+// Declination aspects (parallel / contra-parallel)
+// ---------------------------------------------------------------------------
+
+export interface DeclinationAspect {
+  a: Body;
+  b: Body;
+  type: "parallel" | "contra-parallel";
+  orb: number;
+}
+
+export interface BodyDeclination {
+  body: Body;
+  declination: number;
+}
+
+/** Parallels (same declination) act like conjunctions; contra-parallels like oppositions. */
+export function findDeclinationAspects(
+  positions: BodyDeclination[],
+  maxOrb = 1.0,
+): DeclinationAspect[] {
+  const out: DeclinationAspect[] = [];
+  for (let i = 0; i < positions.length; i++) {
+    for (let j = i + 1; j < positions.length; j++) {
+      const p1 = positions[i]!;
+      const p2 = positions[j]!;
+      const parallelOrb = Math.abs(p1.declination - p2.declination);
+      const contraOrb = Math.abs(p1.declination + p2.declination);
+      if (parallelOrb <= maxOrb) {
+        out.push({ a: p1.body, b: p2.body, type: "parallel", orb: round(parallelOrb, 2) });
+      } else if (contraOrb <= maxOrb) {
+        out.push({ a: p1.body, b: p2.body, type: "contra-parallel", orb: round(contraOrb, 2) });
+      }
+    }
+  }
+  return out.sort((x, y) => x.orb - y.orb);
+}
+
+/** Planets with no major aspects — "wild card" energies that operate unmoderated. */
+export function findUnaspected(positions: BodyLongitude[], aspects: Aspect[]): Body[] {
+  return positions
+    .filter((p) => PATTERN_BODIES.includes(p.body))
+    .filter(
+      (p) => !aspects.some((a) => a.major && (a.a === p.body || a.b === p.body)),
+    )
+    .map((p) => p.body);
+}
+
+// ---------------------------------------------------------------------------
+// Midpoints
+// ---------------------------------------------------------------------------
+
+export interface MidpointEntry {
+  a: string;
+  b: string;
+  longitude: number;
+}
+
+export function computeMidpoints(points: { name: string; longitude: number }[]): MidpointEntry[] {
+  const out: MidpointEntry[] = [];
+  for (let i = 0; i < points.length; i++) {
+    for (let j = i + 1; j < points.length; j++) {
+      const p1 = points[i]!;
+      const p2 = points[j]!;
+      const diff = ((p2.longitude - p1.longitude) % 360 + 540) % 360 - 180;
+      out.push({ a: p1.name, b: p2.name, longitude: round(norm360(p1.longitude + diff / 2), 2) });
+    }
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
 // Chart shape (Jones patterns)
 // ---------------------------------------------------------------------------
 

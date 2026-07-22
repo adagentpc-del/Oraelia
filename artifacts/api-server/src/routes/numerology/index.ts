@@ -8,6 +8,8 @@ import {
   scoreDigits,
   optimizeLaunchDate,
   numberMeaning,
+  extendedNameAnalysis,
+  essenceAtAge,
 } from "@workspace/astro-engine";
 import { resolveBirth } from "../../lib/birth";
 
@@ -23,8 +25,15 @@ router.get("/numerology", async (_req, res): Promise<void> => {
   const cp = challengesAndPinnacles(birth.birthDate);
   const today = new Date().toISOString().slice(0, 10);
   const cycles = personalCycles(birth.birthDate, today);
+  const extended = extendedNameAnalysis(birth.fullName, birth.birthDate);
+  const currentAge = Math.max(
+    0,
+    Math.floor((Date.now() - new Date(`${birth.birthDate}T00:00:00Z`).getTime()) / (365.25 * 86400000)),
+  );
   res.json({
     core,
+    extended,
+    essence: essenceAtAge(birth.fullName, currentAge),
     meanings: {
       lifePath: numberMeaning(core.lifePath),
       expression: numberMeaning(core.expression),

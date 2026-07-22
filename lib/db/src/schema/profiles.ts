@@ -13,6 +13,7 @@ export const profilesTable = pgTable("profiles", {
   birthLatitude: doublePrecision("birth_latitude"),
   birthLongitude: doublePrecision("birth_longitude"),
   birthUtcOffset: doublePrecision("birth_utc_offset"),
+  birthTimeConfidence: text("birth_time_confidence"), // exact_documented | exact_recalled | approximate_within_15_minutes | approximate_within_1_hour | unknown | rectified
   currentCity: text("current_city"),
   relationshipStatus: text("relationship_status"),
   careerStage: text("career_stage"),

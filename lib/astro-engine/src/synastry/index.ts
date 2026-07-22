@@ -2,7 +2,13 @@ import type { Body } from "../core/ephemeris";
 import { midpoint, round, clamp } from "../core/math";
 import { houseOf } from "../core/houses";
 import { computeNatalChart, type NatalChart } from "../natal/chart";
-import { findAspects, type Aspect, type BodyLongitude } from "../natal/aspects";
+import {
+  findAspects,
+  findDeclinationAspects,
+  type Aspect,
+  type BodyLongitude,
+  type DeclinationAspect,
+} from "../natal/aspects";
 import { signOf, type Sign } from "../natal/zodiac";
 import { dateFromJulianDay, type BirthMoment } from "../core/julian";
 
@@ -38,15 +44,29 @@ export interface SynastryScores {
   overall: number;
 }
 
+export interface SynastryDataQuality {
+  timeKnownA: boolean;
+  timeKnownB: boolean;
+  limitations: string[];
+}
+
+export interface SynastryOptions {
+  /** Set false when a birth time is unknown — disables house/angle claims. */
+  timeKnownA?: boolean;
+  timeKnownB?: boolean;
+}
+
 export interface SynastryResult {
   aspects: SynastryAspect[];
   overlays: HouseOverlay[];
+  declinationParallels: DeclinationAspect[];
   composite: CompositePlacement[];
   davisonDate: string;
   scores: SynastryScores;
   greenFlags: string[];
   redFlags: string[];
   keyContacts: string[];
+  dataQuality: SynastryDataQuality;
 }
 
 const OVERLAY_MEANINGS: Record<number, string> = {
@@ -82,10 +102,17 @@ function scorePair(
   return round(clamp(score, 5, 98), 0);
 }
 
-export function computeSynastry(momentA: BirthMoment, momentB: BirthMoment): SynastryResult {
+export function computeSynastry(
+  momentA: BirthMoment,
+  momentB: BirthMoment,
+  options?: SynastryOptions,
+): SynastryResult {
   const chartA = computeNatalChart(momentA);
   const chartB = computeNatalChart(momentB);
-  return synastryFromCharts(chartA, chartB, momentA, momentB);
+  return synastryFromCharts(chartA, chartB, momentA, momentB, {
+    timeKnownA: options?.timeKnownA ?? Boolean(momentA.time),
+    timeKnownB: options?.timeKnownB ?? Boolean(momentB.time),
+  });
 }
 
 export function synastryFromCharts(
@@ -93,7 +120,10 @@ export function synastryFromCharts(
   chartB: NatalChart,
   momentA: BirthMoment,
   momentB: BirthMoment,
+  options?: SynastryOptions,
 ): SynastryResult {
+  const timeKnownA = options?.timeKnownA ?? true;
+  const timeKnownB = options?.timeKnownB ?? true;
   // Cross-aspects: treat A's bodies against B's bodies.
   const aspects: SynastryAspect[] = [];
   for (const pa of chartA.bodies) {
@@ -114,26 +144,52 @@ export function synastryFromCharts(
   aspects.sort((x, y) => y.intensity - x.intensity);
 
   // House overlays: where each person's key planets fall in the other's houses.
+  // Skipped for a person whose birth time (and therefore houses) is unknown.
   const keyBodies: Body[] = ["Sun", "Moon", "Venus", "Mars", "Jupiter", "Saturn"];
   const overlays: HouseOverlay[] = [];
   for (const b of keyBodies) {
-    const pa = chartA.bodies.find((x) => x.body === b)!;
-    const houseInB = houseOf(pa.longitude, chartB.houses.cusps);
-    overlays.push({
-      body: b,
-      owner: "A",
-      fallsInHouse: houseInB,
-      meaning: `A's ${b} in B's house ${houseInB}: ${OVERLAY_MEANINGS[houseInB]}.`,
-    });
-    const pb = chartB.bodies.find((x) => x.body === b)!;
-    const houseInA = houseOf(pb.longitude, chartA.houses.cusps);
-    overlays.push({
-      body: b,
-      owner: "B",
-      fallsInHouse: houseInA,
-      meaning: `B's ${b} in A's house ${houseInA}: ${OVERLAY_MEANINGS[houseInA]}.`,
-    });
+    if (timeKnownB) {
+      const pa = chartA.bodies.find((x) => x.body === b)!;
+      const houseInB = houseOf(pa.longitude, chartB.houses.cusps);
+      overlays.push({
+        body: b,
+        owner: "A",
+        fallsInHouse: houseInB,
+        meaning: `A's ${b} in B's house ${houseInB}: ${OVERLAY_MEANINGS[houseInB]}.`,
+      });
+    }
+    if (timeKnownA) {
+      const pb = chartB.bodies.find((x) => x.body === b)!;
+      const houseInA = houseOf(pb.longitude, chartA.houses.cusps);
+      overlays.push({
+        body: b,
+        owner: "B",
+        fallsInHouse: houseInA,
+        meaning: `B's ${b} in A's house ${houseInA}: ${OVERLAY_MEANINGS[houseInA]}.`,
+      });
+    }
   }
+
+  // Declination parallels between the two charts.
+  const declBodies: Body[] = ["Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn"];
+  const declinationParallels: DeclinationAspect[] = [];
+  for (const ba of declBodies) {
+    for (const bb of declBodies) {
+      const pa = chartA.bodies.find((x) => x.body === ba)!;
+      const pb = chartB.bodies.find((x) => x.body === bb)!;
+      const found = findDeclinationAspects(
+        [
+          { body: ba, declination: pa.declination },
+          { body: bb, declination: pb.declination },
+        ],
+        1.0,
+      );
+      declinationParallels.push(...found);
+    }
+  }
+  const uniqueParallels = declinationParallels
+    .filter((d, i, arr) => arr.findIndex((x) => x.a === d.a && x.b === d.b && x.type === d.type) === i)
+    .slice(0, 10);
 
   // Composite: midpoint chart.
   const composite: CompositePlacement[] = chartA.bodies
@@ -153,7 +209,26 @@ export function synastryFromCharts(
   const scores = computeScores(aspects);
   const { greenFlags, redFlags, keyContacts } = flags(aspects);
 
-  return { aspects: aspects.slice(0, 40), overlays, composite, davisonDate, scores, greenFlags, redFlags, keyContacts };
+  const limitations: string[] = [];
+  if (!timeKnownA) {
+    limitations.push("Person A's birth time is unknown: their houses, angles, and house overlays are excluded; Moon position is approximate (±6°).");
+  }
+  if (!timeKnownB) {
+    limitations.push("Person B's birth time is unknown: their houses, angles, and house overlays are excluded; Moon position is approximate (±6°).");
+  }
+
+  return {
+    aspects: aspects.slice(0, 40),
+    overlays,
+    declinationParallels: uniqueParallels,
+    composite,
+    davisonDate,
+    scores,
+    greenFlags,
+    redFlags,
+    keyContacts,
+    dataQuality: { timeKnownA, timeKnownB, limitations },
+  };
 }
 
 function computeScores(aspects: SynastryAspect[]): SynastryScores {
