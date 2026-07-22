@@ -96,4 +96,32 @@ router.put("/profile", async (req, res): Promise<void> => {
   }
 });
 
+/** Store precise birth coordinates + UTC offset for chart computation. */
+router.put("/profile/birth-location", async (req, res): Promise<void> => {
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const latitude = typeof body.latitude === "number" ? body.latitude : NaN;
+  const longitude = typeof body.longitude === "number" ? body.longitude : NaN;
+  const utcOffset = typeof body.utcOffset === "number" ? body.utcOffset : NaN;
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !Number.isFinite(utcOffset) ||
+      Math.abs(latitude) > 90 || Math.abs(longitude) > 180 || Math.abs(utcOffset) > 14) {
+    res.status(400).json({ error: "Provide { latitude, longitude, utcOffset } as numbers" });
+    return;
+  }
+
+  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
+  if (!user) {
+    res.status(400).json({ error: "No user found" });
+    return;
+  }
+  const [updated] = await db.update(profilesTable)
+    .set({ birthLatitude: latitude, birthLongitude: longitude, birthUtcOffset: utcOffset })
+    .where(eq(profilesTable.userId, user.id))
+    .returning();
+  if (!updated) {
+    res.status(404).json({ error: "Profile not found — create your profile first" });
+    return;
+  }
+  res.json(updated);
+});
+
 export default router;

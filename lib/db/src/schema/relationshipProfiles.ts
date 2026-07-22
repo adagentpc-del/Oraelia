@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, doublePrecision } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -11,6 +11,9 @@ export const relationshipProfilesTable = pgTable("relationship_profiles", {
   birthday: text("birthday"),
   birthTime: text("birth_time"),
   birthCity: text("birth_city"),
+  birthLatitude: doublePrecision("birth_latitude"),
+  birthLongitude: doublePrecision("birth_longitude"),
+  birthUtcOffset: doublePrecision("birth_utc_offset"),
   communicationStyle: text("communication_style"),
   attachmentStyle: text("attachment_style"),
   conflictStyle: text("conflict_style"),
