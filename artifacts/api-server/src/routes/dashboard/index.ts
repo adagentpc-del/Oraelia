@@ -1,33 +1,23 @@
 import { Router, type IRouter } from "express";
+import { requireUserId } from "../../lib/auth";
 import { eq, desc, and } from "drizzle-orm";
 import { db, usersTable, profilesTable, generatedGuidanceTable, generatedContentTable, dailyCheckinsTable, goalsTable, chakraAssessmentsTable, relationshipProfilesTable, locationProfilesTable } from "@workspace/db";
 import { PROMPT_VERSIONS } from "../../lib/prompts";
 
 const router: IRouter = Router();
 
-router.get("/dashboard/summary", async (_req, res): Promise<void> => {
-  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
-  if (!user) {
-    res.json({
-      userName: "Guest",
-      hasProfile: false,
-      onboardingComplete: false,
-      activeGoalsCount: 0,
-      checkinStreak: 0,
-      totalCheckins: 0,
-      relationshipsCount: 0,
-      locationsCount: 0,
-    });
-    return;
-  }
+router.get("/dashboard/summary", async (req, res): Promise<void> => {
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
 
-  const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.userId, user.id));
+  const [currentUser] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+  const [profile] = await db.select().from(profilesTable).where(eq(profilesTable.userId, userId));
 
   const today = new Date().toISOString().split("T")[0];
 
   const [cachedGuidance] = await db.select().from(generatedContentTable)
     .where(and(
-      eq(generatedContentTable.userId, user.id),
+      eq(generatedContentTable.userId, userId),
       eq(generatedContentTable.contentType, "daily_guidance"),
       eq(generatedContentTable.promptVersion, PROMPT_VERSIONS.daily_guidance),
       eq(generatedContentTable.referenceDate, today),
@@ -45,21 +35,21 @@ router.get("/dashboard/summary", async (_req, res): Promise<void> => {
     };
   } else {
     const [legacy] = await db.select().from(generatedGuidanceTable)
-      .where(and(eq(generatedGuidanceTable.userId, user.id), eq(generatedGuidanceTable.date, today)));
+      .where(and(eq(generatedGuidanceTable.userId, userId), eq(generatedGuidanceTable.date, today)));
     if (legacy) todayGuidance = legacy as unknown as Record<string, unknown>;
   }
 
   const [latestCheckin] = await db.select().from(dailyCheckinsTable)
-    .where(eq(dailyCheckinsTable.userId, user.id))
+    .where(eq(dailyCheckinsTable.userId, userId))
     .orderBy(desc(dailyCheckinsTable.createdAt))
     .limit(1);
 
   const goals = await db.select().from(goalsTable)
-    .where(eq(goalsTable.userId, user.id));
+    .where(eq(goalsTable.userId, userId));
   const activeGoals = goals.filter(g => g.status === "active");
 
   const allCheckins = await db.select().from(dailyCheckinsTable)
-    .where(eq(dailyCheckinsTable.userId, user.id))
+    .where(eq(dailyCheckinsTable.userId, userId))
     .orderBy(desc(dailyCheckinsTable.createdAt));
 
   let streak = 0;
@@ -76,18 +66,18 @@ router.get("/dashboard/summary", async (_req, res): Promise<void> => {
   }
 
   const [latestChakra] = await db.select().from(chakraAssessmentsTable)
-    .where(eq(chakraAssessmentsTable.userId, user.id))
+    .where(eq(chakraAssessmentsTable.userId, userId))
     .orderBy(desc(chakraAssessmentsTable.createdAt))
     .limit(1);
 
   const relationships = await db.select().from(relationshipProfilesTable)
-    .where(eq(relationshipProfilesTable.userId, user.id));
+    .where(eq(relationshipProfilesTable.userId, userId));
 
   const locations = await db.select().from(locationProfilesTable)
-    .where(eq(locationProfilesTable.userId, user.id));
+    .where(eq(locationProfilesTable.userId, userId));
 
   const result: Record<string, unknown> = {
-    userName: profile?.fullName || user.name,
+    userName: profile?.fullName || currentUser?.name || "there",
     hasProfile: !!profile,
     onboardingComplete: profile?.onboardingComplete || false,
     activeGoalsCount: activeGoals.length,

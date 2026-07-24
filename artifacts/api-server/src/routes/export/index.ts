@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireUserId } from "../../lib/auth";
 import {
   computeNatalChart,
   allReports,
@@ -42,7 +43,9 @@ function chartMarkdown(chart: NatalChart): string {
  * Markdown returns text/markdown for save/print; JSON returns the raw facts.
  */
 router.get("/export/blueprint", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;

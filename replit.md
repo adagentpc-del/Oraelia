@@ -125,7 +125,7 @@ Natal chart supports `?houses=placidus|whole-sign|equal|porphyry` and `?zodiac=t
 
 ## Important Notes
 
-- Auth is placeholder (auto-logs in as first user in DB)
+- Auth is real: scrypt passwords + HMAC-signed cookie sessions (`src/lib/auth.ts`). Production requires `SESSION_SECRET`; outside production, sessionless requests fall back to the first (seeded demo) user so local dev works without login
 - AI uses OpenAI when `AI_INTEGRATIONS_OPENAI_BASE_URL` is available, falls back to rich demo content with 30s timeout
 - `lib/api-zod/src/index.ts` barrel export gets overwritten by codegen — must re-fix after each codegen run
 - All frontend pages use generated hooks from `@workspace/api-client-react` (not custom fetch)

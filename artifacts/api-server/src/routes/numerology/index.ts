@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireUserId } from "../../lib/auth";
 import {
   coreNumbers,
   challengesAndPinnacles,
@@ -15,8 +16,10 @@ import { resolveBirth } from "../../lib/birth";
 
 const router: IRouter = Router();
 
-router.get("/numerology", async (_req, res): Promise<void> => {
-  const birth = await resolveBirth();
+router.get("/numerology", async (req, res): Promise<void> => {
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;
@@ -83,7 +86,9 @@ router.post("/numerology/compatibility", async (req, res): Promise<void> => {
 });
 
 router.post("/numerology/launch-dates", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;

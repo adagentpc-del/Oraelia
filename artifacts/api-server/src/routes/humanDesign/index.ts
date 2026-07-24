@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireUserId } from "../../lib/auth";
 import { computeHumanDesign, computeHDConnection, type BirthMoment } from "@workspace/astro-engine";
 import { eq, and } from "drizzle-orm";
 import { db, relationshipProfilesTable } from "@workspace/db";
@@ -6,8 +7,10 @@ import { resolveBirth } from "../../lib/birth";
 
 const router: IRouter = Router();
 
-router.get("/human-design", async (_req, res): Promise<void> => {
-  const birth = await resolveBirth();
+router.get("/human-design", async (req, res): Promise<void> => {
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;
@@ -23,7 +26,9 @@ router.get("/human-design", async (_req, res): Promise<void> => {
 
 /** HD connection chart against arbitrary partner birth data. */
 router.post("/human-design/connection", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;
@@ -52,7 +57,9 @@ router.post("/human-design/connection", async (req, res): Promise<void> => {
 
 /** HD connection chart against a saved relationship profile. */
 router.get("/human-design/connection/:relationshipId", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;

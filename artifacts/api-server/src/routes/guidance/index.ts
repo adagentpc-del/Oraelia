@@ -1,24 +1,25 @@
 import { Router, type IRouter } from "express";
+import { requireUserId } from "../../lib/auth";
 import { eq, and } from "drizzle-orm";
 import { db, usersTable, generatedGuidanceTable } from "@workspace/db";
 import { generateContent, getCachedContent } from "../../lib/ai-engine";
 
 const router: IRouter = Router();
 
-router.get("/guidance/today", async (_req, res): Promise<void> => {
-  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
-  if (!user) { res.status(404).json({ error: "No user found" }); return; }
+router.get("/guidance/today", async (req, res): Promise<void> => {
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
 
   const today = new Date().toISOString().split("T")[0];
 
-  const cached = await getCachedContent(user.id, "daily_guidance", today);
+  const cached = await getCachedContent(userId, "daily_guidance", today);
   if (cached) {
     res.json({ ...cached.content, id: cached.id, isAiGenerated: cached.isAiGenerated, promptVersion: cached.promptVersion, cached: true, createdAt: cached.createdAt });
     return;
   }
 
   const [legacy] = await db.select().from(generatedGuidanceTable)
-    .where(and(eq(generatedGuidanceTable.userId, user.id), eq(generatedGuidanceTable.date, today)));
+    .where(and(eq(generatedGuidanceTable.userId, userId), eq(generatedGuidanceTable.date, today)));
 
   if (legacy) {
     res.json(legacy);
@@ -29,14 +30,14 @@ router.get("/guidance/today", async (_req, res): Promise<void> => {
 });
 
 router.post("/guidance/daily", async (req, res): Promise<void> => {
-  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
-  if (!user) { res.status(400).json({ error: "No user found" }); return; }
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
 
   const today = new Date().toISOString().split("T")[0];
   const forceRegenerate = req.body?.regenerate === true;
 
   const result = await generateContent({
-    userId: user.id,
+    userId: userId,
     type: "daily_guidance",
     referenceDate: today,
     forceRegenerate,
@@ -53,8 +54,8 @@ router.post("/guidance/daily", async (req, res): Promise<void> => {
 });
 
 router.post("/guidance/weekly", async (req, res): Promise<void> => {
-  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
-  if (!user) { res.status(400).json({ error: "No user found" }); return; }
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
 
   const now = new Date();
   const dayOfWeek = now.getDay();
@@ -64,7 +65,7 @@ router.post("/guidance/weekly", async (req, res): Promise<void> => {
   const forceRegenerate = req.body?.regenerate === true;
 
   const result = await generateContent({
-    userId: user.id,
+    userId: userId,
     type: "weekly_guidance",
     referenceDate: weekKey,
     forceRegenerate,
@@ -81,15 +82,15 @@ router.post("/guidance/weekly", async (req, res): Promise<void> => {
 });
 
 router.post("/guidance/monthly", async (req, res): Promise<void> => {
-  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
-  if (!user) { res.status(400).json({ error: "No user found" }); return; }
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
 
   const now = new Date();
   const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const forceRegenerate = req.body?.regenerate === true;
 
   const result = await generateContent({
-    userId: user.id,
+    userId: userId,
     type: "monthly_guidance",
     referenceDate: monthKey,
     forceRegenerate,

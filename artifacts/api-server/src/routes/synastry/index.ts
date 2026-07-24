@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireUserId } from "../../lib/auth";
 import { eq, and } from "drizzle-orm";
 import { db, relationshipProfilesTable } from "@workspace/db";
 import {
@@ -30,7 +31,9 @@ function momentFromBody(body: Record<string, unknown>): BirthMoment | null {
 
 /** Ad-hoc synastry against arbitrary birth data. */
 router.post("/synastry", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;
@@ -52,7 +55,9 @@ router.post("/synastry", async (req, res): Promise<void> => {
 
 /** Synastry against a saved relationship profile. */
 router.get("/synastry/relationship/:id", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;

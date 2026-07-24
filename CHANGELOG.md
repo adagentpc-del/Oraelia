@@ -48,6 +48,13 @@
   Life Events, Compatibility (synastry modes + HD connection) — via an
   interim typed fetch client. Engine suite now 61 tests.
 
+- Real authentication: scrypt password hashing (node built-in, zero new
+  deps), stateless HMAC-signed cookie sessions (30d, httpOnly, Secure in
+  prod), transparent re-hash of legacy plaintext rows on login, per-IP rate
+  limiting on auth endpoints, and per-user scoping via `requireUserId` across
+  every route (placeholder "first user" pattern removed; dev keeps a
+  non-production fallback to the seeded user).
+
 ### Fixed
 - Pre-existing workspace typecheck failures: api-zod barrel type-shadowing,
   p-retry v7 `AbortError` import, missing `@types/node`/`react` dev deps,

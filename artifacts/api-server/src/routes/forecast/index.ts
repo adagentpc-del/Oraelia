@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireUserId } from "../../lib/auth";
 import {
   computeNatalChart,
   scoreDay,
@@ -28,7 +29,9 @@ function parseDate(input: unknown): Date {
 }
 
 router.get("/forecast/daily", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;
@@ -69,7 +72,9 @@ router.get("/forecast/daily", async (req, res): Promise<void> => {
 });
 
 router.get("/forecast/weekly", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;
@@ -100,7 +105,9 @@ router.get("/forecast/weekly", async (req, res): Promise<void> => {
 });
 
 router.get("/forecast/monthly", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;
@@ -135,7 +142,9 @@ router.get("/forecast/monthly", async (req, res): Promise<void> => {
 });
 
 router.get("/forecast/yearly", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;

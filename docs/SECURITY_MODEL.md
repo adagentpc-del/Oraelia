@@ -1,12 +1,28 @@
 # Security Model
 
+## Authentication
+
+Real authentication is implemented in `artifacts/api-server/src/lib/auth.ts`:
+
+- **Passwords**: scrypt (node:crypto, N=16384, per-user random salt), stored as
+  `scrypt$N$salt$hash`. Legacy plaintext rows (placeholder-auth era) are
+  verified with a timing-safe compare and transparently re-hashed on the next
+  successful login.
+- **Sessions**: stateless HMAC-SHA256-signed tokens (`userId.expiry.signature`)
+  in an httpOnly, SameSite=Lax cookie (`Secure` in production), 30-day TTL.
+  `SESSION_SECRET` (≥16 chars) is required in production; dev uses an
+  ephemeral random secret with a logged warning.
+- **Rate limiting**: in-memory per-IP limiter on login/register
+  (10 attempts / 15 min). Replace with a shared store when horizontally scaled.
+- **Dev fallback**: outside production, requests without a session resolve to
+  the first (seeded demo) user so local development works without logging in.
+  In production, unauthenticated requests receive 401.
+
 ## Authorization
 
-- Row-level ownership: every table with user data carries `user_id`; all new
-  routes filter by the resolved user's id (see `lifeEvents`, `synastry`).
-- Placeholder auth is the top production blocker — replace with session/JWT
-  auth before any deployment with real users; add rate limiting at the API
-  gateway at the same time.
+- Row-level ownership: every table with user data carries `user_id`; every
+  route resolves the caller via `requireUserId(req, res)` and filters by it —
+  the "first user" placeholder pattern has been removed.
 
 ## Input validation
 

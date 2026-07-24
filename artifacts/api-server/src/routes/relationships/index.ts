@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireUserId } from "../../lib/auth";
 import { eq } from "drizzle-orm";
 import { db, usersTable, relationshipProfilesTable } from "@workspace/db";
 import { CreateRelationshipBody, UpdateRelationshipBody, GetRelationshipParams, UpdateRelationshipParams, DeleteRelationshipParams, GenerateRelationshipSummaryParams } from "@workspace/api-zod";
@@ -6,12 +7,12 @@ import { generateContent, getCachedContent } from "../../lib/ai-engine";
 
 const router: IRouter = Router();
 
-router.get("/relationships", async (_req, res): Promise<void> => {
-  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
-  if (!user) { res.json([]); return; }
+router.get("/relationships", async (req, res): Promise<void> => {
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
 
   const relationships = await db.select().from(relationshipProfilesTable)
-    .where(eq(relationshipProfilesTable.userId, user.id));
+    .where(eq(relationshipProfilesTable.userId, userId));
   res.json(relationships);
 });
 
@@ -19,10 +20,10 @@ router.post("/relationships", async (req, res): Promise<void> => {
   const parsed = CreateRelationshipBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
-  if (!user) { res.status(400).json({ error: "No user found" }); return; }
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
 
-  const [rel] = await db.insert(relationshipProfilesTable).values({ userId: user.id, ...parsed.data }).returning();
+  const [rel] = await db.insert(relationshipProfilesTable).values({ userId: userId, ...parsed.data }).returning();
   res.status(201).json(rel);
 });
 
@@ -63,8 +64,8 @@ router.post("/relationships/:id/summary", async (req, res): Promise<void> => {
   const [rel] = await db.select().from(relationshipProfilesTable).where(eq(relationshipProfilesTable.id, params.data.id));
   if (!rel) { res.status(404).json({ error: "Relationship not found" }); return; }
 
-  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
-  if (!user) { res.status(400).json({ error: "No user found" }); return; }
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
 
   const forceRegenerate = req.body?.regenerate === true;
 
@@ -81,7 +82,7 @@ router.post("/relationships/:id/summary", async (req, res): Promise<void> => {
   ].filter(Boolean).join("\n");
 
   const result = await generateContent({
-    userId: user.id,
+    userId: userId,
     type: "relationship_overlay",
     referenceId: rel.id,
     extraContext,

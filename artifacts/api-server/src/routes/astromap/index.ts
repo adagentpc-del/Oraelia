@@ -1,11 +1,14 @@
 import { Router, type IRouter } from "express";
+import { requireUserId } from "../../lib/auth";
 import { computeNatalChart, computeAstroMap, scoreCity, WORLD_CITIES, localSpaceLines, computeParans } from "@workspace/astro-engine";
 import { resolveBirth } from "../../lib/birth";
 
 const router: IRouter = Router();
 
-router.get("/astromap", async (_req, res): Promise<void> => {
-  const birth = await resolveBirth();
+router.get("/astromap", async (req, res): Promise<void> => {
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;
@@ -23,7 +26,9 @@ router.get("/astromap", async (_req, res): Promise<void> => {
 });
 
 router.get("/astromap/city", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;

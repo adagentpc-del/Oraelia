@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireUserId } from "../../lib/auth";
 import { eq, and, desc } from "drizzle-orm";
 import { db, lifeEventsTable, insertLifeEventSchema } from "@workspace/db";
 import {
@@ -21,8 +22,10 @@ const EVENT_TYPES = [
   "emotional_high", "emotional_low", "major_decision", "other",
 ];
 
-router.get("/life-events", async (_req, res): Promise<void> => {
-  const birth = await resolveBirth();
+router.get("/life-events", async (req, res): Promise<void> => {
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile first" });
     return;
@@ -36,7 +39,9 @@ router.get("/life-events", async (_req, res): Promise<void> => {
 });
 
 router.post("/life-events", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile first" });
     return;
@@ -58,7 +63,9 @@ router.post("/life-events", async (req, res): Promise<void> => {
 });
 
 router.delete("/life-events/:id", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile first" });
     return;
@@ -84,7 +91,9 @@ router.delete("/life-events/:id", async (req, res): Promise<void> => {
  * when this event happened. The stored facts, not AI guesses.
  */
 router.get("/life-events/:id/analysis", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile first" });
     return;
@@ -123,7 +132,9 @@ router.get("/life-events/:id/analysis", async (req, res): Promise<void> => {
 
 /** Aggregate pattern scan across all logged events of a category. */
 router.get("/life-events/patterns/:category", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile first" });
     return;

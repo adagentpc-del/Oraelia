@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireUserId } from "../../lib/auth";
 import {
   computeNatalChart,
   transitEvents,
@@ -19,7 +20,9 @@ const router: IRouter = Router();
  * over a forward window. ?days=365 (max 730), ?from=YYYY-MM-DD.
  */
 router.get("/timing/transit-events", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;
@@ -53,7 +56,9 @@ function resolveLocation(req: { query: Record<string, unknown> }, fallback: { la
  * ?year=2026&city=Lisbon or ?latitude=&longitude= (defaults to birth location).
  */
 router.get("/returns/solar", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;
@@ -74,7 +79,9 @@ router.get("/returns/solar", async (req, res): Promise<void> => {
 
 /** Next lunar return from a date, optionally relocated. */
 router.get("/returns/lunar", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;
@@ -93,7 +100,9 @@ router.get("/returns/lunar", async (req, res): Promise<void> => {
 
 /** Multi-year planning timeline: ?years=10 (max 30), starting at current age. */
 router.get("/timing/timeline", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;
@@ -112,7 +121,9 @@ router.get("/timing/timeline", async (req, res): Promise<void> => {
 
 /** Quarterly strategic synthesis: profections + lunations + exact transits over ~92 days. */
 router.get("/forecast/quarterly", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;

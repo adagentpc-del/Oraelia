@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireUserId } from "../../lib/auth";
 import {
   computeNatalChart,
   draconicPositions,
@@ -23,7 +24,9 @@ const router: IRouter = Router();
 const HOUSE_SYSTEMS: HouseSystem[] = ["placidus", "whole-sign", "equal", "porphyry"];
 
 router.get("/natal/chart", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;
@@ -42,8 +45,10 @@ router.get("/natal/chart", async (req, res): Promise<void> => {
 });
 
 /** Draconic chart: the natal chart rotated so the North Node = 0° Aries. */
-router.get("/natal/draconic", async (_req, res): Promise<void> => {
-  const birth = await resolveBirth();
+router.get("/natal/draconic", async (req, res): Promise<void> => {
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;
@@ -57,7 +62,9 @@ router.get("/natal/draconic", async (_req, res): Promise<void> => {
 
 /** Compare house systems / zodiacs: which conclusions shift, which are stable. */
 router.get("/natal/compare", async (req, res): Promise<void> => {
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;
@@ -94,8 +101,10 @@ const REPORT_BUILDERS: Record<string, (chart: NatalChart) => unknown> = {
   spirituality: spiritualityReport,
 };
 
-router.get("/natal/reports", async (_req, res): Promise<void> => {
-  const birth = await resolveBirth();
+router.get("/natal/reports", async (req, res): Promise<void> => {
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;
@@ -110,7 +119,9 @@ router.get("/natal/reports/:category", async (req, res): Promise<void> => {
     res.status(400).json({ error: `Unknown category. Use: ${Object.keys(REPORT_BUILDERS).join(", ")}` });
     return;
   }
-  const birth = await resolveBirth();
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;
@@ -120,8 +131,10 @@ router.get("/natal/reports/:category", async (req, res): Promise<void> => {
 });
 
 /** Personalized deep dives: static wisdom keyed to this chart's actual placements. */
-router.get("/natal/deep-dives", async (_req, res): Promise<void> => {
-  const birth = await resolveBirth();
+router.get("/natal/deep-dives", async (req, res): Promise<void> => {
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
+  const birth = await resolveBirth(userId);
   if (!birth) {
     res.status(404).json({ error: "Complete your profile with birth data first" });
     return;

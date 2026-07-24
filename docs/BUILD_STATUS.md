@@ -18,11 +18,14 @@ Updated: 2026-07-22 · Branch: `claude/oralia-astrology-ios-app-z5y48p`
 | 9 — Astrocartography | ✅ | Lines, relocation, 80-city scoring, goal rankings, local-space compass bearings, paran latitude bands; web Places page + iOS map |
 | 10 — Longitudinal intelligence | ✅ v1 | `life_events` table, per-event timing analysis, category pattern scans |
 | 11 — Reports/subscriptions/practitioner | 🚧 | Markdown + JSON blueprint export shipped (`GET /export/blueprint`); PDF, entitlements, practitioner mode remaining |
-| 12 — Hardening | 🚧 | Data-quality model + disclaimers shipped; auth is still placeholder single-user |
+| 12 — Hardening | 🚧 | Real auth shipped: scrypt passwords, signed cookie sessions, per-user scoping on every route, auth rate limiting; remaining: audit tables, export links, deletion workflow |
 
 ## Known gaps / blockers
 
-- **Auth is placeholder** (auto-login as first user). Row-ownership checks exist but real authentication is required before production (spec §24).
+- **Auth is real** (scrypt + signed cookie sessions). Deploy requires
+  `SESSION_SECRET`; the dev-only fallback to the seeded demo user is disabled
+  when `NODE_ENV=production`. Remaining §24 items: audit/export/deletion
+  workflows, signed report links.
 - **Ephemeris**: custom Keplerian/Meeus implementation (~0.1° planets, ~0.05° Moon). A Swiss Ephemeris adapter is the documented upgrade path (ADR-0001) for arcminute-critical features (exact fixed stars, parans).
 - **Alyssa QA fixture discrepancy**: spec expects "Libra Moon near 8°"; the computed Moon is ~12° Capricorn, which is consistent with the real 1989-04-21 full moon at ~1° Scorpio. ASC (23° Virgo) and Sun (6° Taurus) match the spec exactly. Flagged for product review (docs/TEST_PLAN.md).
 - Web frontend surfaces all engines via 8 new pages (Blueprint, Timing, Places,
