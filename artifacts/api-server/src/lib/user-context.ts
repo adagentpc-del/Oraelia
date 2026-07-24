@@ -1,4 +1,5 @@
 import { eq, desc } from "drizzle-orm";
+import { sanitizeForPrompt } from "./promptSafety";
 import {
   db,
   usersTable,
@@ -201,7 +202,7 @@ export function formatContextForPrompt(ctx: UserContext): string {
 
   if (ctx.profile) {
     lines.push(`== PERSONAL PROFILE ==`);
-    lines.push(`Name: ${ctx.profile.fullName}`);
+    lines.push(`Name: ${sanitizeForPrompt(ctx.profile.fullName)}`);
     lines.push(`Birthday: ${ctx.profile.birthday}${ctx.profile.birthTime ? ` at ${ctx.profile.birthTime}` : ""}`);
     if (ctx.profile.birthCity) lines.push(`Birth City: ${ctx.profile.birthCity}`);
     if (ctx.profile.currentCity) lines.push(`Current City: ${ctx.profile.currentCity}`);
@@ -209,7 +210,7 @@ export function formatContextForPrompt(ctx: UserContext): string {
     lines.push(`Life Path Number: ${ctx.profile.lifePathNumber ?? "Unknown"}`);
     if (ctx.profile.relationshipStatus) lines.push(`Relationship Status: ${ctx.profile.relationshipStatus}`);
     if (ctx.profile.careerStage) lines.push(`Career Stage: ${ctx.profile.careerStage}`);
-    if (ctx.profile.currentChallenges) lines.push(`Current Challenges: ${ctx.profile.currentChallenges}`);
+    if (ctx.profile.currentChallenges) lines.push(`Current Challenges: ${sanitizeForPrompt(ctx.profile.currentChallenges)}`);
     if (ctx.profile.spiritualOpenness) lines.push(`Spiritual Openness: ${ctx.profile.spiritualOpenness}`);
     lines.push(`Guidance Tone: ${ctx.profile.guidanceTone}`);
   }
@@ -227,7 +228,7 @@ export function formatContextForPrompt(ctx: UserContext): string {
   if (ctx.goals.length > 0) {
     lines.push(`\n== GOALS ==`);
     for (const g of ctx.goals) {
-      lines.push(`- ${g.title} [${g.status}]${g.category ? ` (${g.category})` : ""}`);
+      lines.push(`- ${sanitizeForPrompt(g.title)} [${g.status}]${g.category ? ` (${g.category})` : ""}`);
     }
   }
 
@@ -239,8 +240,8 @@ export function formatContextForPrompt(ctx: UserContext): string {
       if (c.cyclePhase) line += `, Cycle: ${c.cyclePhase}`;
       lines.push(line);
     }
-    const aligned = ctx.recentCheckins.filter((c) => c.whatFeltAligned).map((c) => c.whatFeltAligned);
-    const draining = ctx.recentCheckins.filter((c) => c.whatFeltDraining).map((c) => c.whatFeltDraining);
+    const aligned = ctx.recentCheckins.filter((c) => c.whatFeltAligned).map((c) => sanitizeForPrompt(c.whatFeltAligned));
+    const draining = ctx.recentCheckins.filter((c) => c.whatFeltDraining).map((c) => sanitizeForPrompt(c.whatFeltDraining));
     if (aligned.length > 0) lines.push(`Recent aligned moments: ${aligned.join("; ")}`);
     if (draining.length > 0) lines.push(`Recent draining moments: ${draining.join("; ")}`);
   }

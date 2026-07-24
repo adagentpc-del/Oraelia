@@ -127,6 +127,55 @@ export async function requireUserId(_req: Request, res: Response): Promise<numbe
 }
 
 // ---------------------------------------------------------------------------
+// One-time tokens (password reset, email verification)
+// ---------------------------------------------------------------------------
+
+import { createHash } from "node:crypto";
+import { authTokensTable } from "@workspace/db";
+import { and, eq, isNull, gt } from "drizzle-orm";
+
+export type OneTimeTokenType = "password_reset" | "email_verify";
+
+const TOKEN_TTL: Record<OneTimeTokenType, number> = {
+  password_reset: 60 * 60 * 1000, // 1 hour
+  email_verify: 24 * 60 * 60 * 1000, // 24 hours
+};
+
+function hashToken(raw: string): string {
+  return createHash("sha256").update(raw).digest("hex");
+}
+
+/** Issues a one-time token; only its hash is persisted. */
+export async function issueToken(userId: number, type: OneTimeTokenType): Promise<string> {
+  const raw = randomBytes(32).toString("base64url");
+  await db.insert(authTokensTable).values({
+    userId,
+    type,
+    tokenHash: hashToken(raw),
+    expiresAt: new Date(Date.now() + TOKEN_TTL[type]),
+  });
+  return raw;
+}
+
+/** Consumes a token exactly once; returns the owning userId or null. */
+export async function consumeToken(raw: string, type: OneTimeTokenType): Promise<number | null> {
+  if (!raw || raw.length > 128) return null;
+  const [row] = await db
+    .update(authTokensTable)
+    .set({ usedAt: new Date() })
+    .where(
+      and(
+        eq(authTokensTable.tokenHash, hashToken(raw)),
+        eq(authTokensTable.type, type),
+        isNull(authTokensTable.usedAt),
+        gt(authTokensTable.expiresAt, new Date()),
+      ),
+    )
+    .returning();
+  return row?.userId ?? null;
+}
+
+// ---------------------------------------------------------------------------
 // Minimal in-memory rate limiter (per-IP, for auth endpoints)
 // ---------------------------------------------------------------------------
 

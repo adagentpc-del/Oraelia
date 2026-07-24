@@ -15,9 +15,16 @@ iOS: `cd apps/ios && xcodegen generate && open Oralia.xcodeproj` (macOS, Xcode 1
 ## Deploy checklist
 
 1. `pnpm run build` green.
-2. DB migration applied (`db push` in dev; generate SQL migrations for prod).
-3. Env: `DATABASE_URL`, optional `AI_INTEGRATIONS_OPENAI_BASE_URL`.
-4. Replace placeholder auth before exposure to real users (see SECURITY_MODEL).
+2. DB migration applied (`db push` in dev; generate SQL migrations for prod),
+   then apply RLS: `psql "$DATABASE_URL" -f lib/db/rls.sql`.
+3. Required env: `DATABASE_URL`, `SESSION_SECRET` (≥16 chars), `APP_BASE_URL`.
+4. Optional env: `AI_INTEGRATIONS_OPENAI_BASE_URL` (AI), `TURNSTILE_SECRET_KEY`
+   (captcha), `IP_DENYLIST` (comma-separated), `RATE_LIMIT_PER_MINUTE`
+   (default 300).
+5. Wire a real email provider in `src/lib/email.ts` (dev adapter only logs) —
+   password reset and email verification depend on it.
+6. Put a CDN/WAF (e.g. Cloudflare) in front for network-layer firewall, bot
+   management, and TLS.
 
 ## Common issues
 

@@ -55,6 +55,14 @@
   every route (placeholder "first user" pattern removed; dev keeps a
   non-production fallback to the seeded user).
 
+- Security hardening: Postgres row-level security (rls.sql + runAsUser/
+  runAsSystem GUC helpers), password reset and email verification with
+  hashed single-use tokens and an email-adapter seam, security headers,
+  in-process application firewall (IP denylist, probe-pattern blocking,
+  global per-IP rate limit), anti-bot registration screening (honeypot,
+  UA screening, optional Turnstile captcha), and prompt-injection defenses
+  (sanitizer + data envelopes + system-prompt guard) wired into the AI layer.
+
 ### Fixed
 - Pre-existing workspace typecheck failures: api-zod barrel type-shadowing,
   p-retry v7 `AbortError` import, missing `@types/node`/`react` dev deps,

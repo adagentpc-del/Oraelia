@@ -4,7 +4,8 @@ Schema source of truth: `lib/db/src/schema/`. Types are exported per table.
 
 | Table | Purpose | Notable columns |
 | --- | --- | --- |
-| users | auth identity | email |
+| users | auth identity | email, password (scrypt hash), **email_verified_at** |
+| **auth_tokens** | one-time tokens | type (password_reset\|email_verify), token_hash (SHA-256, raw never stored), expires_at, used_at |
 | profiles | birth data + preferences | birthday, birthTime, birthCity, **birthLatitude/Longitude/UtcOffset**, **birthTimeConfidence** (exact_documented\|exact_recalled\|approximate_within_15_minutes\|approximate_within_1_hour\|unknown\|rectified), guidanceTone, hd*, sunSign, lifePathNumber |
 | goals | user goals | category |
 | daily_checkins | mood/energy/stress/sleep | |
