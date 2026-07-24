@@ -449,6 +449,104 @@ struct ReportsResponse: Decodable {
     let reports: [LifeReport]
 }
 
+// MARK: - Timeline & quarterly
+
+struct TimelineYear: Decodable, Identifiable {
+    let age: Int
+    let calendarYear: Int
+    let profectedHouse: Int
+    let profectedSign: String
+    let yearLord: String
+    let theme: String
+    let cycleMarkers: [String]
+    let progressedMoonPhase: String
+    var id: Int { age }
+}
+
+struct TimelineResponse: Decodable {
+    let fromAge: Int
+    let years: Int
+    let timeline: [TimelineYear]
+    let note: String?
+}
+
+struct MonthlyTheme: Decodable, Identifiable {
+    let month: String
+    let profectedHouse: Int
+    let theme: String
+    var id: String { month }
+}
+
+struct QuarterLunation: Decodable, Identifiable {
+    let date: String
+    let type: String
+    let sign: String
+    let isEclipse: Bool
+    let natalHouse: Int?
+    var id: String { date + type }
+}
+
+struct TransitEventModel: Decodable, Identifiable {
+    let transiting: String
+    let natal: String
+    let aspect: String
+    let date: String
+    let retrograde: Bool
+    let pass: Int
+    var id: String { "\(date)-\(transiting)-\(aspect)-\(natal)-\(pass)" }
+}
+
+struct QuarterlyForecastModel: Decodable {
+    let startDate: String
+    let endDate: String
+    let annualProfection: Profection
+    let monthlyThemes: [MonthlyTheme]
+    let lunations: [QuarterLunation]
+    let exactTransits: [TransitEventModel]
+    let launchWindows: [String]
+    let cautionWindows: [String]
+    let strategicTheme: String
+}
+
+// MARK: - Life events
+
+struct LifeEventModel: Decodable, Identifiable {
+    let id: Int
+    let title: String
+    let eventType: String
+    let eventDate: String
+    let description: String?
+    let category: String?
+    let intensity: Int?
+    let outcome: String?
+}
+
+struct LifeEventsResponse: Decodable {
+    let events: [LifeEventModel]
+    let eventTypes: [String]
+}
+
+struct LifeEventAnalysis: Decodable {
+    let ageAtEvent: Int
+    let profection: Profection
+    let personalCycles: PersonalCycles
+    let activeTransits: [Transit]
+    let retrogradesAtEvent: [RetrogradeStatus]
+    let note: String?
+}
+
+struct LifeEventAnalysisResponse: Decodable {
+    let event: LifeEventModel
+    let analysis: LifeEventAnalysis
+}
+
+struct LifeEventPatternsResponse: Decodable {
+    let category: String
+    let events: Int
+    let patterns: [String]
+    let note: String?
+}
+
 // MARK: - Profile
 
 struct UserProfile: Decodable {

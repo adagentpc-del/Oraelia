@@ -6,6 +6,9 @@ import {
   lunarReturnChart,
   julianDayFromDate,
   WORLD_CITIES,
+  planningTimeline,
+  quarterlyForecast,
+  ageAt,
 } from "@workspace/astro-engine";
 import { resolveBirth } from "../../lib/birth";
 
@@ -86,6 +89,39 @@ router.get("/returns/lunar", async (req, res): Promise<void> => {
   const natal = computeNatalChart(birth.moment);
   const result = lunarReturnChart(natal, julianDayFromDate(from), location.latitude, location.longitude);
   res.json({ ...result, location, dataQuality: birth.dataQuality });
+});
+
+/** Multi-year planning timeline: ?years=10 (max 30), starting at current age. */
+router.get("/timing/timeline", async (req, res): Promise<void> => {
+  const birth = await resolveBirth();
+  if (!birth) {
+    res.status(404).json({ error: "Complete your profile with birth data first" });
+    return;
+  }
+  const years = Math.min(Math.max(parseInt(String(req.query.years ?? "10"), 10) || 10, 1), 30);
+  const chart = computeNatalChart(birth.moment);
+  const currentAge = ageAt(birth.moment, julianDayFromDate(new Date()));
+  const fromAge = Math.max(0, parseInt(String(req.query.fromAge ?? currentAge), 10) || currentAge);
+  res.json({
+    fromAge,
+    years,
+    timeline: planningTimeline(chart, birth.moment, fromAge, years),
+    note: "Probability and theme language, not guarantees: profection houses and planetary cycle windows describe emphasis, not fixed events.",
+  });
+});
+
+/** Quarterly strategic synthesis: profections + lunations + exact transits over ~92 days. */
+router.get("/forecast/quarterly", async (req, res): Promise<void> => {
+  const birth = await resolveBirth();
+  if (!birth) {
+    res.status(404).json({ error: "Complete your profile with birth data first" });
+    return;
+  }
+  const from = typeof req.query.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)
+    ? new Date(`${req.query.date}T00:00:00Z`)
+    : new Date();
+  const chart = computeNatalChart(birth.moment);
+  res.json(quarterlyForecast(chart, birth.moment, julianDayFromDate(from)));
 });
 
 export default router;

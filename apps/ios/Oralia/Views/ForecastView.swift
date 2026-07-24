@@ -4,18 +4,20 @@ struct ForecastView: View {
     @State private var horizon = "Weekly"
     @StateObject private var weekly = Loadable<WeeklyForecast>()
     @StateObject private var monthly = Loadable<MonthlyForecast>()
+    @StateObject private var quarterly = Loadable<QuarterlyForecastModel>()
     @StateObject private var yearly = Loadable<YearlyForecast>()
 
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
                 Picker("Horizon", selection: $horizon) {
-                    ForEach(["Weekly", "Monthly", "Yearly"], id: \.self) { Text($0) }
+                    ForEach(["Weekly", "Monthly", "Quarterly", "Yearly"], id: \.self) { Text($0) }
                 }
                 .pickerStyle(.segmented)
 
                 switch horizon {
                 case "Monthly": monthlyContent
+                case "Quarterly": quarterlyContent
                 case "Yearly": yearlyContent
                 default: weeklyContent
                 }
@@ -30,7 +32,51 @@ struct ForecastView: View {
     private func loadAll() {
         if weekly.value == nil { weekly.run { try await APIClient.shared.get("/forecast/weekly") } }
         if monthly.value == nil { monthly.run { try await APIClient.shared.get("/forecast/monthly") } }
+        if quarterly.value == nil { quarterly.run { try await APIClient.shared.get("/forecast/quarterly") } }
         if yearly.value == nil { yearly.run { try await APIClient.shared.get("/forecast/yearly") } }
+    }
+
+    @ViewBuilder
+    private var quarterlyContent: some View {
+        if let error = quarterly.error { ErrorBanner(message: error) }
+        if quarterly.isLoading { ProgressView().padding(40) }
+        if let forecast = quarterly.value {
+            SectionCard(title: "Strategic Theme", subtitle: "\(forecast.startDate) → \(forecast.endDate)") {
+                Text(forecast.strategicTheme).font(.footnote)
+            }
+            SectionCard(title: "Month by Month") {
+                ForEach(forecast.monthlyThemes) { month in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(month.month) — house \(month.profectedHouse)").font(.caption.bold())
+                        Text(month.theme).font(.caption2).foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 3)
+                }
+            }
+            SectionCard(title: "Launch Windows") {
+                ForEach(forecast.launchWindows, id: \.self) { window in
+                    Label(window, systemImage: "arrow.up.forward.circle").font(.caption)
+                }
+            }
+            SectionCard(title: "Caution Windows") {
+                ForEach(forecast.cautionWindows, id: \.self) { window in
+                    Label(window, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            if !forecast.exactTransits.isEmpty {
+                SectionCard(title: "Exact Transit Hits") {
+                    ForEach(forecast.exactTransits) { event in
+                        HStack {
+                            Text(event.date).font(.caption2.monospacedDigit()).frame(width: 78, alignment: .leading)
+                            Text("\(event.transiting) \(event.aspect) \(event.natal)").font(.caption)
+                            if event.retrograde { Text("℞").font(.caption2).foregroundStyle(Theme.plumLight) }
+                            if event.pass > 1 { Text("pass \(event.pass)").font(.caption2).foregroundStyle(Theme.gold) }
+                            Spacer()
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @ViewBuilder

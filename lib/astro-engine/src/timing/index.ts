@@ -592,6 +592,143 @@ export function planetaryHours(date: Date): PowerHour[] {
 }
 
 // ---------------------------------------------------------------------------
+// Multi-year planning timeline
+// ---------------------------------------------------------------------------
+
+export interface TimelineYear {
+  age: number;
+  calendarYear: number;
+  profectedHouse: number;
+  profectedSign: Sign;
+  yearLord: Body;
+  theme: string;
+  cycleMarkers: string[];
+  progressedMoonPhase: string;
+}
+
+const CYCLE_MARKERS: { age: number; window: number; label: string }[] = [
+  { age: 12, window: 0.8, label: "Jupiter return #1 — expansion of world and confidence" },
+  { age: 24, window: 0.8, label: "Jupiter return #2 — growth through opportunity taken" },
+  { age: 27, window: 1.2, label: "Progressed lunar return — emotional recalibration before Saturn" },
+  { age: 29.5, window: 1.3, label: "Saturn return #1 — structural adulthood; commitments get real" },
+  { age: 36, window: 0.8, label: "Jupiter return #3 — mid-course expansion window" },
+  { age: 38, window: 1.5, label: "Uranus square — restlessness that previews midlife renewal" },
+  { age: 42, window: 1.5, label: "Uranus opposition — the midlife authenticity reckoning" },
+  { age: 44, window: 1.5, label: "Neptune square — dissolving outdated dreams for truer ones" },
+  { age: 47.5, window: 0.8, label: "Jupiter return #4 — wisdom-phase expansion" },
+  { age: 50, window: 1.8, label: "Chiron return — the wound matures into medicine" },
+  { age: 55, window: 1.2, label: "Second progressed lunar return — emotional harvest" },
+  { age: 58.8, window: 1.3, label: "Saturn return #2 — elderhood; keeping only what's true" },
+  { age: 60, window: 0.8, label: "Jupiter return #5 — renewal of purpose" },
+];
+
+/** Progressed Moon phase name: the secondary-progressed Sun-Moon angle. */
+function progressedMoonPhaseAt(chart: NatalChart, age: number): string {
+  const progJd = chart.julianDay + age;
+  const sun = bodyPosition("Sun", progJd);
+  const moon = bodyPosition("Moon", progJd);
+  const angle = norm360(moon.longitude - sun.longitude);
+  const names = ["New (seed)", "Crescent (build)", "First Quarter (push)", "Gibbous (refine)", "Full (culminate)", "Disseminating (share)", "Last Quarter (reorient)", "Balsamic (release)"];
+  return names[Math.floor(((angle + 22.5) % 360) / 45)]!;
+}
+
+export function planningTimeline(
+  chart: NatalChart,
+  moment: BirthMoment,
+  fromAge: number,
+  years: number,
+): TimelineYear[] {
+  const birthYear = parseInt(moment.date.slice(0, 4), 10);
+  const out: TimelineYear[] = [];
+  for (let age = fromAge; age < fromAge + Math.min(years, 30); age++) {
+    const profection = annualProfection(chart, age);
+    const cycleMarkers = CYCLE_MARKERS.filter((m) => Math.abs(m.age - age) <= m.window).map((m) => m.label);
+    out.push({
+      age,
+      calendarYear: birthYear + age,
+      profectedHouse: profection.profectedHouse,
+      profectedSign: profection.profectedSign,
+      yearLord: profection.yearLord,
+      theme: profection.theme,
+      cycleMarkers,
+      progressedMoonPhase: progressedMoonPhaseAt(chart, age),
+    });
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Quarterly synthesis
+// ---------------------------------------------------------------------------
+
+export interface QuarterlyForecast {
+  startDate: string;
+  endDate: string;
+  annualProfection: Profection;
+  monthlyThemes: { month: string; profectedHouse: number; theme: string }[];
+  lunations: { date: string; type: string; sign: Sign; isEclipse: boolean; natalHouse: number | null }[];
+  exactTransits: TransitEvent[];
+  launchWindows: string[];
+  cautionWindows: string[];
+  strategicTheme: string;
+}
+
+export function quarterlyForecast(chart: NatalChart, moment: BirthMoment, fromJd: number): QuarterlyForecast {
+  const age = ageAt(moment, fromJd);
+  const annual = annualProfection(chart, age);
+  const monthsSince = monthsSinceBirthday(moment, fromJd);
+
+  const monthlyThemes = [0, 1, 2].map((offset) => {
+    const monthly = monthlyProfection(chart, age, monthsSince + offset);
+    const date = dateFromJulianDay(fromJd + offset * 30.44);
+    return {
+      month: date.toISOString().slice(0, 7),
+      profectedHouse: monthly.profectedHouse,
+      theme: monthly.theme,
+    };
+  });
+
+  const lunations = upcomingLunations(fromJd, 6, chart)
+    .filter((l) => {
+      const jd = julianDayFromDate(l.date);
+      return jd <= fromJd + 92;
+    })
+    .map((l) => ({
+      date: l.date.toISOString().slice(0, 10),
+      type: l.type,
+      sign: l.sign,
+      isEclipse: l.isEclipse,
+      natalHouse: l.natalHouse,
+    }));
+
+  const exactTransits = transitEvents(chart, fromJd, 92);
+
+  const supportive = exactTransits.filter((t) => t.aspect === "trine" || t.aspect === "sextile");
+  const hard = exactTransits.filter((t) => t.aspect === "square" || t.aspect === "opposition");
+  const eclipses = lunations.filter((l) => l.isEclipse);
+
+  const launchWindows = supportive.slice(0, 3).map(
+    (t) => `Around ${t.date}: ${t.transiting} ${t.aspect} natal ${t.natal} supports forward moves.`,
+  );
+  const cautionWindows = [
+    ...hard.slice(0, 2).map((t) => `Around ${t.date}: ${t.transiting} ${t.aspect} natal ${t.natal} — build margin, avoid irreversible commitments.`),
+    ...eclipses.map((e) => `${e.date}: ${e.type} eclipse in ${e.sign} — let events settle for ~5 days before major decisions.`),
+  ];
+
+  return {
+    startDate: dateFromJulianDay(fromJd).toISOString().slice(0, 10),
+    endDate: dateFromJulianDay(fromJd + 92).toISOString().slice(0, 10),
+    annualProfection: annual,
+    monthlyThemes,
+    lunations,
+    exactTransits: exactTransits.slice(0, 20),
+    launchWindows: launchWindows.length ? launchWindows : ["No exact supportive slow-planet hits this quarter — momentum comes from execution, not timing."],
+    cautionWindows: cautionWindows.length ? cautionWindows : ["No major caution windows — a clean quarter for building."],
+    strategicTheme: `${annual.theme} This quarter moves through houses ${monthlyThemes.map((m) => m.profectedHouse).join(" → ")}.`,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 

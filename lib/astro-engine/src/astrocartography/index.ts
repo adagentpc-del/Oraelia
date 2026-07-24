@@ -72,6 +72,73 @@ export function computeAstroLines(chart: NatalChart): AstroLine[] {
 }
 
 // ---------------------------------------------------------------------------
+// Local space: compass directions of the planets from the birth place
+// ---------------------------------------------------------------------------
+
+export interface LocalSpaceLine {
+  body: Body;
+  /** Compass azimuth in degrees (0 = North, 90 = East). */
+  azimuth: number;
+  /** Altitude at birth (negative = below horizon). */
+  altitude: number;
+  compass: string;
+  meaning: string;
+}
+
+const LS_MEANINGS: Partial<Record<Body, string>> = {
+  Sun: "vitality and recognition flow from this direction — orient important rooms, offices, and journeys this way",
+  Moon: "comfort and belonging — the direction for homes, retreats, and family visits",
+  Mercury: "commerce and communication — good direction for offices, studies, errands",
+  Venus: "pleasure, love, and beauty — dates, studios, and social life thrive along this line",
+  Mars: "drive and challenge — gyms, competitions, and confrontations; energizing but abrasive",
+  Jupiter: "opportunity and growth — travel and business development along this bearing tends to expand",
+  Saturn: "discipline and burden — serious work gets done here; not a holiday direction",
+  Uranus: "surprise and reinvention — novelty and disruption come from this bearing",
+  Neptune: "imagination and dissolution — retreats and art, but double-check practical plans",
+  Pluto: "intensity and transformation — powerful, consuming; travel this way changes you",
+};
+
+function compassName(azimuth: number): string {
+  const names = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+  return names[Math.round(norm360(azimuth) / 22.5) % 16]!;
+}
+
+/** Local-space lines: horizon-system azimuths of each planet at birth. */
+export function localSpaceLines(
+  chart: NatalChart,
+  latitude: number,
+  longitude: number,
+): LocalSpaceLine[] {
+  const jd = chart.julianDay;
+  const lstDeg = gmst(jd) + longitude;
+  const out: LocalSpaceLine[] = [];
+  for (const placed of chart.bodies) {
+    if (!PLANETARY_BODIES.includes(placed.body)) continue;
+    const shift = chart.meta.ayanamsaDegrees ?? 0;
+    const eq = equatorialOf(norm360(placed.longitude + shift), placed.latitude, jd);
+    const hourAngle = norm360(lstDeg - eq.ra);
+    const sinAlt =
+      sinDeg(latitude) * sinDeg(eq.decl) + cosDeg(latitude) * cosDeg(eq.decl) * cosDeg(hourAngle);
+    const altitude = Math.asin(Math.max(-1, Math.min(1, sinAlt))) * (180 / Math.PI);
+    // Azimuth measured from North, increasing eastward.
+    const azimuth = norm360(
+      Math.atan2(
+        -sinDeg(hourAngle) * cosDeg(eq.decl),
+        sinDeg(eq.decl) * cosDeg(latitude) - cosDeg(eq.decl) * sinDeg(latitude) * cosDeg(hourAngle),
+      ) * (180 / Math.PI),
+    );
+    out.push({
+      body: placed.body,
+      azimuth: round(azimuth, 1),
+      altitude: round(altitude, 1),
+      compass: compassName(azimuth),
+      meaning: `${compassName(azimuth)} (${round(azimuth, 0)}°): ${LS_MEANINGS[placed.body] ?? "a distinctive influence"}.`,
+    });
+  }
+  return out.sort((a, b) => a.azimuth - b.azimuth);
+}
+
+// ---------------------------------------------------------------------------
 // Relocation & city scoring
 // ---------------------------------------------------------------------------
 

@@ -30,6 +30,13 @@
 - Governance docs (`docs/`), ADRs 0001–0003, 55-test golden-fixture suite
   including the Alyssa QA fixture.
 
+- Multi-year planning timeline (profection years + Saturn/Jupiter/Uranus/
+  Chiron cycle markers + progressed Moon phases), quarterly strategic
+  forecast, Human Design connection charts (electromagnetic/dominance/
+  compromise/companionship channels), Cradle / Grand Sextile / Thor's Hammer
+  patterns, local-space astrology bearings; iOS Timeline, Life Events, and
+  Quarterly forecast screens. Engine suite now 59 tests.
+
 ### Fixed
 - Pre-existing workspace typecheck failures: api-zod barrel type-shadowing,
   p-retry v7 `AbortError` import, missing `@types/node`/`react` dev deps,

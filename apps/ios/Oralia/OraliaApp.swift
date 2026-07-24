@@ -34,8 +34,16 @@ struct MoreView: View {
                 NavigationLink { ForecastView() } label: {
                     Label("Forecasts", systemImage: "calendar")
                 }
+                NavigationLink { TimelineView() } label: {
+                    Label("10-Year Timeline", systemImage: "chart.line.uptrend.xyaxis")
+                }
                 NavigationLink { DecisionView() } label: {
                     Label("Decision Engine", systemImage: "scale.3d")
+                }
+            }
+            Section("Patterns") {
+                NavigationLink { LifeEventsView() } label: {
+                    Label("Life Events", systemImage: "clock.arrow.circlepath")
                 }
             }
             Section("Systems") {

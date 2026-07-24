@@ -198,6 +198,118 @@ const PROFILE_NAMES: Record<string, string> = {
   "6/3": "Role Model / Martyr",
 };
 
+// ---------------------------------------------------------------------------
+// Connection chart (two people)
+// ---------------------------------------------------------------------------
+
+export type ChannelConnectionKind =
+  | "companionship" // both have the whole channel
+  | "dominance" // one has the whole channel, other has neither gate
+  | "compromise" // one has the whole channel, other has one gate
+  | "electromagnetic"; // each supplies one gate — the classic attraction wire
+
+export interface ConnectionChannel {
+  gates: [number, number];
+  name: string;
+  kind: ChannelConnectionKind;
+  meaning: string;
+}
+
+export interface HDConnection {
+  typeA: HDType;
+  typeB: HDType;
+  combinedDefinedCenters: Center[];
+  openTogether: Center[];
+  connectionTheme: string;
+  channels: ConnectionChannel[];
+  electromagneticCount: number;
+  notes: string[];
+}
+
+const KIND_MEANINGS: Record<ChannelConnectionKind, string> = {
+  companionship: "you both carry this — easy familiarity, little friction, little charge",
+  dominance: "one of you runs this channel entirely — the other learns from it (or gets conditioned by it)",
+  compromise: "one completes the other's half — workable, but the full-channel person tends to set the terms",
+  electromagnetic: "each of you supplies half — the classic attraction/repulsion wire that neither has alone",
+};
+
+export function computeHDConnection(momentA: BirthMoment, momentB: BirthMoment): HDConnection {
+  const a = computeHumanDesign(momentA);
+  const b = computeHumanDesign(momentB);
+  const gatesA = new Set(a.activations.map((x) => x.gate));
+  const gatesB = new Set(b.activations.map((x) => x.gate));
+
+  const channels: ConnectionChannel[] = [];
+  for (const [g1, g2, name] of CHANNELS) {
+    const aHas1 = gatesA.has(g1);
+    const aHas2 = gatesA.has(g2);
+    const bHas1 = gatesB.has(g1);
+    const bHas2 = gatesB.has(g2);
+    const aWhole = aHas1 && aHas2;
+    const bWhole = bHas1 && bHas2;
+    const jointlyComplete = (aHas1 || bHas1) && (aHas2 || bHas2);
+    if (!jointlyComplete) continue;
+
+    let kind: ChannelConnectionKind | null = null;
+    if (aWhole && bWhole) kind = "companionship";
+    else if (aWhole || bWhole) {
+      const other = aWhole ? bHas1 || bHas2 : aHas1 || aHas2;
+      kind = other ? "compromise" : "dominance";
+    } else if ((aHas1 && bHas2) || (aHas2 && bHas1)) {
+      kind = "electromagnetic";
+    }
+    if (!kind) continue;
+    channels.push({
+      gates: [g1, g2],
+      name,
+      kind,
+      meaning: `Channel of ${name} (${g1}-${g2}): ${KIND_MEANINGS[kind]}.`,
+    });
+  }
+
+  const combinedDefined = new Set<Center>();
+  for (const ch of channels) {
+    combinedDefined.add(GATE_CENTERS[ch.gates[0]]!);
+    combinedDefined.add(GATE_CENTERS[ch.gates[1]]!);
+  }
+  const allCenters: Center[] = ["Head", "Ajna", "Throat", "G", "Heart", "Sacral", "Spleen", "SolarPlexus", "Root"];
+  const combined = allCenters.filter((c) => combinedDefined.has(c));
+  const openTogether = allCenters.filter((c) => !combinedDefined.has(c));
+
+  const definedCount = combined.length;
+  const themeMap: Record<number, string> = {
+    9: "9-0: a fully defined pair — intense, complete, nowhere to escape each other; needs deliberate space.",
+    8: "8-1: one open center together — that center becomes the relationship's shared fascination and pressure point.",
+    7: "7-2: two windows of openness — a healthy mix of intensity and room to breathe.",
+    6: "6-3: significant openness — freedom-rich, requires conscious effort to stay engaged.",
+  };
+  const connectionTheme = themeMap[definedCount] ?? `${definedCount}-${9 - definedCount}: a spacious connection — plenty of freedom, bond maintained by choice rather than mechanics.`;
+
+  const electromagnetic = channels.filter((c) => c.kind === "electromagnetic");
+  const notes: string[] = [];
+  if (electromagnetic.length) {
+    notes.push(`${electromagnetic.length} electromagnetic channel(s): ${electromagnetic.map((c) => c.name).join(", ")} — the chemistry wires; they attract first and irritate later, which is normal mechanics, not failure.`);
+  }
+  const dominance = channels.filter((c) => c.kind === "dominance");
+  if (dominance.length) {
+    notes.push(`Dominance channels (${dominance.map((c) => c.name).join(", ")}): one of you simply IS this for the other — receive it as teaching, not control.`);
+  }
+  if (a.type === b.type) {
+    notes.push(`Same type (${a.type} + ${b.type}): you understand each other's rhythm natively; the risk is amplifying each other's not-self theme.`);
+  }
+
+  return {
+    typeA: a.type,
+    typeB: b.type,
+    combinedDefinedCenters: combined,
+    openTogether,
+    connectionTheme,
+    channels,
+    electromagneticCount: electromagnetic.length,
+    notes,
+  };
+}
+
 export function computeHumanDesign(moment: BirthMoment): HumanDesignChart {
   const natalJd = julianDayFromMoment(moment);
   const designJd = designJulianDay(natalJd);

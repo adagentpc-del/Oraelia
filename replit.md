@@ -109,7 +109,8 @@ Pure-TypeScript, zero-dependency computation library:
 - `humanDesign` — GET /human-design
 - `decision` — POST /decision ({ question, category, date? })
 - `profile` — also PUT /profile/birth-location ({ latitude, longitude, utcOffset }) for precise houses
-- `timing` — GET /timing/transit-events (exact hits + retrograde passes), GET /returns/solar, /returns/lunar (relocatable return charts)
+- `timing` — GET /timing/transit-events (exact hits + retrograde passes), GET /timing/timeline (multi-year planning), GET /forecast/quarterly, GET /returns/solar, /returns/lunar (relocatable return charts)
+- `humanDesign` — also POST /human-design/connection and GET /human-design/connection/:relationshipId (connection charts)
 - `lifeEvents` — CRUD /life-events, GET /life-events/:id/analysis (timing factors at event), GET /life-events/patterns/:category
 
 Natal chart supports `?houses=placidus|whole-sign|equal|porphyry` and `?zodiac=tropical|sidereal`, plus GET /natal/compare and /natal/draconic. All chart responses include calculation `meta` (engine/method version, source hash) and `dataQuality` (birth-time confidence model). See `docs/` for method documentation, ADRs, and build status; `lib/astro-engine/test/` holds the 55-test golden-fixture suite (`pnpm --filter @workspace/astro-engine run test`).

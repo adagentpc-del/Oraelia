@@ -13,9 +13,9 @@ Updated: 2026-07-22 · Branch: `claude/oralia-astrology-ios-app-z5y48p`
 | 4 — Profections & timing | ✅ | Annual/monthly profections, daily scoring, transit-event arcs with retrograde passes |
 | 5 — Returns & progressions | ✅ | Solar/lunar return charts with natal overlay & relocation; secondary progressions; solar arcs |
 | 6 — Numerology | ✅ | Full core + extended set (karmic lessons, hidden passion, cornerstone/capstone, Chaldean comparison, essences); transparent workings |
-| 7 — Human Design | ✅ | Type/strategy/authority/profile/definition, channels/centers, variables; connection chart not yet built |
+| 7 — Human Design | ✅ | Type/strategy/authority/profile/definition, channels/centers, variables; connection chart (companionship/dominance/compromise/electromagnetic) |
 | 8 — Synastry | ✅ | Cross-aspects, overlays with unknown-time safety, declination parallels, composite/Davison, data-quality limitations |
-| 9 — Astrocartography | ✅ engine / 🚧 map UX | Lines, relocation, 80-city scoring, goal rankings; parans & local space not yet built |
+| 9 — Astrocartography | ✅ engine / 🚧 map UX | Lines, relocation, 80-city scoring, goal rankings, local-space compass bearings; parans not yet built |
 | 10 — Longitudinal intelligence | ✅ v1 | `life_events` table, per-event timing analysis, category pattern scans |
 | 11 — Reports/subscriptions/practitioner | ⬜ | Not started (PDF export, entitlements, practitioner mode) |
 | 12 — Hardening | 🚧 | Data-quality model + disclaimers shipped; auth is still placeholder single-user |
@@ -31,5 +31,13 @@ Updated: 2026-07-22 · Branch: `claude/oralia-astrology-ios-app-z5y48p`
 ## Verification
 
 - `pnpm run typecheck` — passes across all packages
-- `pnpm --filter @workspace/astro-engine run test` — 55/55 passing
+- `pnpm --filter @workspace/astro-engine run test` — 59/59 passing
+
+## Latest slice (quarterly/timeline/connection)
+
+Added: multi-year planning timeline (profections + planetary cycle markers +
+progressed Moon phases), quarterly strategic forecast, HD connection charts,
+Cradle / Grand Sextile / Thor's Hammer patterns, local-space astrology;
+routes `/timing/timeline`, `/forecast/quarterly`, `/human-design/connection[/:relationshipId]`,
+`localSpace` in `/astromap`; iOS Timeline, Life Events, and Quarterly screens.
 - Eclipse predictions validated against real events (2026-08-12 solar, 2026-08-28 lunar)

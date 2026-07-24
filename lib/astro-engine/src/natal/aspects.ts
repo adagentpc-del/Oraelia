@@ -139,7 +139,10 @@ export type PatternType =
   | "Yod"
   | "Kite"
   | "Mystic Rectangle"
-  | "Stellium";
+  | "Stellium"
+  | "Cradle"
+  | "Grand Sextile"
+  | "Thor's Hammer";
 
 export interface AspectPattern {
   type: PatternType;
@@ -304,6 +307,77 @@ export function findPatterns(positions: BodyLongitude[], aspects: Aspect[]): Asp
         });
       }
     }
+
+  // Cradle: an opposition bridged on one side by two planets forming a
+  // sextile-trine chain (A opp B; A sextile C trine B; A trine D sextile B).
+  for (const opp of aspects.filter((x) => x.type === "opposition")) {
+    for (const c of bodies) {
+      if (c === opp.a || c === opp.b) continue;
+      for (const d of bodies) {
+        if (d === c || d === opp.a || d === opp.b) continue;
+        const chain =
+          hasAspect(aspects, opp.a, c, "sextile") &&
+          hasAspect(aspects, c, opp.b, "trine") &&
+          hasAspect(aspects, opp.b, d, "sextile") &&
+          hasAspect(aspects, d, opp.a, "trine") &&
+          hasAspect(aspects, c, d, "sextile");
+        if (chain) {
+          patterns.push({
+            type: "Cradle",
+            bodies: [opp.a, c, d, opp.b],
+            description: `A cradle rocks the ${opp.a}–${opp.b} opposition through ${c} and ${d} — tension that always has a soft landing; growth without the crash, at the risk of avoiding the core confrontation.`,
+          });
+        }
+      }
+    }
+  }
+
+  // Thor's Hammer: two planets in square, both sesquiquadrate a third apex.
+  for (const sq of aspects.filter((x) => x.type === "square")) {
+    for (const apex of bodies) {
+      if (apex === sq.a || apex === sq.b) continue;
+      if (
+        hasAspect(aspects, apex, sq.a, "sesquiquadrate") &&
+        hasAspect(aspects, apex, sq.b, "sesquiquadrate")
+      ) {
+        patterns.push({
+          type: "Thor's Hammer",
+          bodies: [sq.a, sq.b, apex],
+          focal: apex,
+          description: `Thor's Hammer pointing at ${apex}: pressurized, percussive drive — enormous force for breakthrough work, with a temper that needs a worthy target.`,
+        });
+      }
+    }
+  }
+
+  // Grand Sextile: six planets in mutual hexagram (extremely rare).
+  const sextilePartners = new Map<Body, Set<Body>>();
+  for (const asp of aspects.filter((x) => x.type === "sextile")) {
+    if (!sextilePartners.has(asp.a)) sextilePartners.set(asp.a, new Set());
+    if (!sextilePartners.has(asp.b)) sextilePartners.set(asp.b, new Set());
+    sextilePartners.get(asp.a)!.add(asp.b);
+    sextilePartners.get(asp.b)!.add(asp.a);
+  }
+  const hexCandidates = bodies.filter((b) => (sextilePartners.get(b)?.size ?? 0) >= 2);
+  if (hexCandidates.length >= 6) {
+    // Walk the zodiac order and check consecutive sextiles around the wheel.
+    const ordered = hexCandidates
+      .map((b) => ({ b, lon: positions.find((p) => p.body === b)!.longitude }))
+      .sort((x, y) => x.lon - y.lon);
+    if (ordered.length >= 6) {
+      const six = ordered.slice(0, 6);
+      const closed = six.every((cur, i) =>
+        hasAspect(aspects, cur.b, six[(i + 1) % 6]!.b, "sextile"),
+      );
+      if (closed) {
+        patterns.push({
+          type: "Grand Sextile",
+          bodies: six.map((x) => x.b),
+          description: "A Grand Sextile — six planets in a closed hexagram. Extraordinarily rare: opportunity circuits everywhere, activated only by deliberate effort.",
+        });
+      }
+    }
+  }
 
   // Stellium: 3+ planets in the same sign within tight range.
   const bySign = new Map<number, Body[]>();
