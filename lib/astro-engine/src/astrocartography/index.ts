@@ -139,6 +139,104 @@ export function localSpaceLines(
 }
 
 // ---------------------------------------------------------------------------
+// Parans: latitudes where two planets are simultaneously angular
+// ---------------------------------------------------------------------------
+
+export interface Paran {
+  bodyA: Body;
+  kindA: "MC" | "IC";
+  bodyB: Body;
+  kindB: "ASC" | "DSC";
+  latitude: number;
+  meaning: string;
+}
+
+const PARAN_PAIR_MEANINGS: Partial<Record<string, string>> = {
+  "Sun-Jupiter": "success and visibility combine — a latitude band of recognition",
+  "Venus-Jupiter": "love and abundance cross — among the most fortunate paran bands",
+  "Sun-Saturn": "authority earned under pressure — achievement with weight",
+  "Moon-Venus": "emotional sweetness — a comfort and belonging band",
+  "Mars-Saturn": "grinding friction — a demanding band best used for hard training, not settling",
+  "Sun-Pluto": "power and intensity — transformation follows you at this latitude",
+  "Venus-Mars": "charged attraction — romance and creative heat",
+  "Moon-Saturn": "emotional seriousness — solitude and duty color life here",
+};
+
+/**
+ * Paran latitudes: where one planet's meridian line (MC/IC) crosses another's
+ * horizon line (ASC/DSC). Influence is conventionally felt in a ~1° latitude
+ * band around the crossing, anywhere along that latitude.
+ */
+export function computeParans(chart: NatalChart): Paran[] {
+  const jd = chart.julianDay;
+  const gst = gmst(jd);
+  const shift = chart.meta.ayanamsaDegrees ?? 0;
+  const planets = chart.bodies.filter((b) => PLANETARY_BODIES.includes(b.body));
+  const out: Paran[] = [];
+
+  const equatorial = new Map<Body, EquatorialCoords>();
+  for (const p of planets) {
+    equatorial.set(p.body, equatorialOf(norm360(p.longitude + shift), p.latitude, jd));
+  }
+
+  const risingLon = (eq: EquatorialCoords, lat: number, setting: boolean): number | null => {
+    const x = -tanDeg(lat) * tanDeg(eq.decl);
+    if (Math.abs(x) > 1) return null;
+    const h0 = Math.acos(x) * (180 / Math.PI);
+    return norm180(eq.ra + (setting ? h0 : -h0) - gst);
+  };
+
+  for (const a of planets) {
+    const eqA = equatorial.get(a.body)!;
+    for (const kindA of ["MC", "IC"] as const) {
+      const meridianLon = norm180(eqA.ra - gst + (kindA === "IC" ? 180 : 0));
+      for (const b of planets) {
+        if (b.body === a.body) continue;
+        const eqB = equatorial.get(b.body)!;
+        for (const kindB of ["ASC", "DSC"] as const) {
+          let prev: number | null = null;
+          for (let lat = -66; lat <= 66; lat += 0.5) {
+            const lon = risingLon(eqB, lat, kindB === "DSC");
+            if (lon === null) {
+              prev = null;
+              continue;
+            }
+            const diff = norm180(lon - meridianLon);
+            if (prev !== null && Math.sign(diff) !== Math.sign(prev) && Math.abs(diff - prev) < 90) {
+              const frac = Math.abs(prev) / (Math.abs(prev) + Math.abs(diff) || 1);
+              const paranLat = round(lat - 0.5 + frac * 0.5, 1);
+              const key = `${a.body}-${b.body}`;
+              const keyRev = `${b.body}-${a.body}`;
+              out.push({
+                bodyA: a.body,
+                kindA,
+                bodyB: b.body,
+                kindB,
+                latitude: paranLat,
+                meaning:
+                  PARAN_PAIR_MEANINGS[key] ?? PARAN_PAIR_MEANINGS[keyRev] ??
+                  `${a.body} and ${b.body} act together along this latitude band`,
+              });
+            }
+            prev = diff;
+          }
+        }
+      }
+    }
+  }
+  // Keep the strongest storyline: dedupe identical pairs at near-identical latitudes.
+  const seen = new Set<string>();
+  return out
+    .filter((p) => {
+      const key = `${p.bodyA}-${p.bodyB}-${Math.round(p.latitude)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((x, y) => x.latitude - y.latitude);
+}
+
+// ---------------------------------------------------------------------------
 // Relocation & city scoring
 // ---------------------------------------------------------------------------
 

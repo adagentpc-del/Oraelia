@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { computeNatalChart, computeAstroMap, scoreCity, WORLD_CITIES, localSpaceLines } from "@workspace/astro-engine";
+import { computeNatalChart, computeAstroMap, scoreCity, WORLD_CITIES, localSpaceLines, computeParans } from "@workspace/astro-engine";
 import { resolveBirth } from "../../lib/birth";
 
 const router: IRouter = Router();
@@ -17,6 +17,7 @@ router.get("/astromap", async (_req, res): Promise<void> => {
     cities: map.cityScores,
     bestFor: map.bestFor,
     localSpace: localSpaceLines(chart, birth.moment.latitude, birth.moment.longitude),
+    parans: computeParans(chart).slice(0, 40),
     approximateLocation: birth.approximateLocation,
   });
 });

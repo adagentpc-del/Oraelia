@@ -1,7 +1,17 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, relationshipProfilesTable } from "@workspace/db";
-import { computeNatalChart, synastryFromCharts, type BirthMoment } from "@workspace/astro-engine";
+import {
+  computeNatalChart,
+  synastryFromCharts,
+  relationshipReport,
+  type BirthMoment,
+  type RelationshipReportMode,
+} from "@workspace/astro-engine";
+
+function parseMode(input: unknown): RelationshipReportMode {
+  return input === "business" || input === "breakup" ? input : "romantic";
+}
 import { resolveBirth } from "../../lib/birth";
 
 const router: IRouter = Router();
@@ -36,7 +46,8 @@ router.post("/synastry", async (req, res): Promise<void> => {
     timeKnownA: Boolean(birth.moment.time),
     timeKnownB: Boolean(partner.time),
   });
-  res.json({ synastry: result });
+  const mode = parseMode((req.body as Record<string, unknown> | undefined)?.mode);
+  res.json({ synastry: result, report: relationshipReport(result, mode) });
 });
 
 /** Synastry against a saved relationship profile. */
@@ -76,10 +87,12 @@ router.get("/synastry/relationship/:id", async (req, res): Promise<void> => {
     timeKnownA: Boolean(birth.moment.time),
     timeKnownB: Boolean(rel.birthTime),
   });
+  const mode = parseMode(req.query.mode);
   res.json({
     personName: rel.personName,
     relationshipType: rel.relationshipType,
     synastry: result,
+    report: relationshipReport(result, mode),
     approximatePartnerLocation: rel.birthLatitude === null,
   });
 });

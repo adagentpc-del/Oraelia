@@ -6,6 +6,9 @@ import {
   quarterlyForecast,
   computeHDConnection,
   localSpaceLines,
+  computeParans,
+  computeSynastry,
+  relationshipReport,
   julianDayFromDate,
   type BirthMoment,
 } from "../src/index";
@@ -72,6 +75,38 @@ test("HD connection chart classifies channels and is symmetric in count", () => 
     ab.channels.filter((c) => c.kind === "electromagnetic").length,
   );
   assert.match(ab.connectionTheme, /^\d-\d:/);
+});
+
+test("parans fall within circumpolar-safe latitudes and are deduped", () => {
+  const chart = computeNatalChart(MOMENT);
+  const parans = computeParans(chart);
+  assert.ok(parans.length > 0, "expected at least one paran crossing");
+  const seen = new Set<string>();
+  for (const paran of parans) {
+    assert.ok(paran.latitude >= -66 && paran.latitude <= 66);
+    assert.ok(["MC", "IC"].includes(paran.kindA));
+    assert.ok(["ASC", "DSC"].includes(paran.kindB));
+    const key = `${paran.bodyA}-${paran.bodyB}-${Math.round(paran.latitude)}`;
+    assert.ok(!seen.has(key), `duplicate paran ${key}`);
+    seen.add(key);
+  }
+});
+
+test("relationship report modes produce mode-appropriate sections", () => {
+  const synastry = computeSynastry(MOMENT, PARTNER);
+  const romantic = relationshipReport(synastry, "romantic");
+  const business = relationshipReport(synastry, "business");
+  const breakup = relationshipReport(synastry, "breakup");
+  assert.ok(romantic.sections.some((s) => s.heading === "Emotional bond"));
+  assert.ok(business.sections.some((s) => s.heading === "Contract safeguards"));
+  assert.ok(breakup.sections.some((s) => s.heading === "What this is not"));
+  for (const report of [romantic, business, breakup]) {
+    assert.ok(report.thesis.length > 10);
+    assert.ok(report.disclaimer.length > 10);
+    assert.ok(report.sections.length >= 4);
+  }
+  // Breakup mode must not claim knowledge of the other person's feelings.
+  assert.match(breakup.disclaimer, /no claims about the other person/i);
 });
 
 test("local space lines give one bearing per planet with valid ranges", () => {

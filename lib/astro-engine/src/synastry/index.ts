@@ -336,6 +336,127 @@ function computeScores(aspects: SynastryAspect[]): SynastryScores {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Relationship report modes (spec §12)
+// ---------------------------------------------------------------------------
+
+export type RelationshipReportMode = "romantic" | "business" | "breakup";
+
+export interface RelationshipReport {
+  mode: RelationshipReportMode;
+  thesis: string;
+  sections: { heading: string; content: string }[];
+  disclaimer: string;
+}
+
+function band(score: number): "strong" | "solid" | "mixed" | "strained" {
+  if (score >= 75) return "strong";
+  if (score >= 60) return "solid";
+  if (score >= 45) return "mixed";
+  return "strained";
+}
+
+export function relationshipReport(result: SynastryResult, mode: RelationshipReportMode): RelationshipReport {
+  const s = result.scores;
+  const sections: { heading: string; content: string }[] = [];
+
+  if (mode === "romantic") {
+    sections.push(
+      {
+        heading: "Emotional bond",
+        content: `Emotional attunement scores ${s.emotional}/100 (${band(s.emotional)}). ${s.emotional >= 60 ? "You read each other's inner weather with relatively little translation." : "Your emotional languages differ — feelings need to be said out loud, not assumed to be obvious."}`,
+      },
+      {
+        heading: "Attraction and chemistry",
+        content: `Chemistry ${s.chemistry}/100, passion ${s.passion}/100. ${s.chemistry >= 70 ? "The pull is real and mechanical — it will survive ordinary life if you protect novelty." : "Attraction here builds through familiarity rather than lightning; slow-burn bonds of this shape often outlast flashier ones."}`,
+      },
+      {
+        heading: "Communication",
+        content: `Communication scores ${s.communication}/100 (${band(s.communication)}). ${s.communication < 55 ? "Agree on a repair protocol now, while calm: what each of you needs mid-conflict, in one sentence each." : "Conversation is a genuine channel of intimacy for you two — use it as the repair tool it is."}`,
+      },
+      {
+        heading: "Commitment and longevity",
+        content: `Long-term stability ${s.longTermStability}/100; shared purpose ${s.sharedPurpose}/100. ${s.longTermStability >= 60 ? "There is structural glue here — the kind that makes staying easier than leaving in hard seasons." : "Longevity will rest on chosen commitment more than automatic glue; rituals and explicit agreements matter extra."}`,
+      },
+      {
+        heading: "Conflict cycle",
+        content: `Conflict risk ${s.conflictRisk}/100. ${s.conflictRisk >= 60 ? `The friction contacts (${result.keyContacts.slice(0, 2).join("; ") || "see key contacts"}) describe your repeating fight. Learn its opening move and interrupt it early.` : "Friction is moderate — disagreements are workable when neither of you imports outside stress into them."}`,
+      },
+      {
+        heading: "Growth potential",
+        content: `Growth ${s.growth}/100. ${result.greenFlags[0] ?? "The strongest contacts support mutual development."} ${result.redFlags[0] ? `Watch: ${result.redFlags[0]}` : ""}`,
+      },
+    );
+    return {
+      mode,
+      thesis: `Overall compatibility ${s.overall}/100 — ${band(s.overall)}. ${s.chemistry >= 70 && s.longTermStability < 50 ? "High-chemistry, lower-glue: thrilling, and it needs deliberate structure to last." : s.longTermStability >= 70 && s.chemistry < 50 ? "High-glue, quieter-spark: durable, and it needs deliberate play to stay alive." : "Chemistry and stability are broadly in proportion."}`,
+      sections,
+      disclaimer: "Compatibility analysis describes dynamics and tendencies, not certainties about another person's feelings or the outcome of a relationship.",
+    };
+  }
+
+  if (mode === "business") {
+    sections.push(
+      {
+        heading: "Vision compatibility",
+        content: `Shared purpose ${s.sharedPurpose}/100. ${s.sharedPurpose >= 60 ? "You are pointed at compatible horizons — strategy debates will be about route, not destination." : "Confirm you actually want the same endgame before structuring anything; misaligned exits sink more partnerships than misaligned skills."}`,
+      },
+      {
+        heading: "Communication and decisions",
+        content: `Communication ${s.communication}/100. ${s.communication >= 60 ? "Information flows well — keep decision rights explicit anyway." : "Put decision rights, veto areas, and escalation paths in writing early; your natural styles will otherwise talk past each other under pressure."}`,
+      },
+      {
+        heading: "Money and execution",
+        content: `Business compatibility ${s.business}/100 (${band(s.business)}). Split roles by temperament: one of you should own commitments to the outside world, the other the internal machine — decide which is which from your charts' strengths, not politeness.`,
+      },
+      {
+        heading: "Conflict and power",
+        content: `Conflict risk ${s.conflictRisk}/100. ${s.conflictRisk >= 60 ? "Expect real power friction. Pre-agree on a tiebreaker mechanism (odd advisor, rotating final call) before the first big disagreement." : "Friction is manageable; quarterly retros will keep it that way."}`,
+      },
+      {
+        heading: "Contract safeguards",
+        content: "Whatever the synastry says: vesting schedules, IP assignment, exit terms, and deadlock resolution belong in signed documents. Astrology informs the working relationship; it never replaces legal agreements.",
+      },
+    );
+    return {
+      mode,
+      thesis: `Business partnership potential ${s.business}/100 with conflict risk ${s.conflictRisk}/100 — ${band(s.business)} foundation${s.conflictRisk >= 60 ? ", requiring explicit governance" : ""}.`,
+      sections,
+      disclaimer: "This analysis is a working-style lens, not legal, financial, or hiring advice. Contract safeguards are required regardless of compatibility scores.",
+    };
+  }
+
+  // Breakup integration mode.
+  sections.push(
+    {
+      heading: "Why the bond felt significant",
+      content: `${result.keyContacts.length ? `The contacts that wired you together — ${result.keyContacts.slice(0, 3).join("; ")} — are real mechanics, not imagination.` : "The intensity you felt has chart mechanics behind it."} Significance was genuine; that is precisely why the loss registers in the body, not just the mind.`,
+    },
+    {
+      heading: "Intensity vs. compatibility",
+      content: `Chemistry scored ${s.chemistry}/100 while long-term stability scored ${s.longTermStability}/100. ${s.chemistry > s.longTermStability + 15 ? "That gap is the story: the connection generated more voltage than structure. Missing the voltage is not evidence the structure could have worked." : "The bond had real structural elements — grief here includes mourning a plausible future, which deserves acknowledgment."}`,
+    },
+    {
+      heading: "Attachment mechanisms",
+      content: `${result.overlays.some((o) => [8, 12].includes(o.fallsInHouse)) ? "Deep-house overlays (8th/12th) explain why this person reached subterranean layers — those bonds release slowly; be patient with the timeline." : "The overlays were largely daylight houses — the attachment can integrate faster than it currently feels."}`,
+    },
+    {
+      heading: "Boundaries and integration",
+      content: "Contact structured around your healing, not their news. The lesson inventory: what did this bond teach you to require, to offer, and to never again abandon in yourself? Write those three lists — they are the relationship's inheritance.",
+    },
+    {
+      heading: "What this is not",
+      content: "This analysis cannot tell you what they feel now, whether they will return, or who was right. Symbolic systems read dynamics, not other people's minds — and healing does not require those answers.",
+    },
+  );
+  return {
+    mode,
+    thesis: "Integration reading: honoring what was real, separating intensity from fit, and converting the bond into usable self-knowledge.",
+    sections,
+    disclaimer: "This reading supports reflection after a relationship ends. It makes no claims about the other person's current feelings or future actions, and it is not a substitute for professional support in acute distress.",
+  };
+}
+
 function flags(aspects: SynastryAspect[]): { greenFlags: string[]; redFlags: string[]; keyContacts: string[] } {
   const greenFlags: string[] = [];
   const redFlags: string[] = [];

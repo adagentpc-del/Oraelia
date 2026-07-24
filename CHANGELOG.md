@@ -37,6 +37,17 @@
   patterns, local-space astrology bearings; iOS Timeline, Life Events, and
   Quarterly forecast screens. Engine suite now 59 tests.
 
+- Parans (latitude bands where two planets are simultaneously angular),
+  synastry report modes (romantic / business / breakup-integration with
+  ethical guardrails), Markdown + JSON blueprint export
+  (`GET /export/blueprint`).
+- Web frontend: 8 new pages surfacing every engine — Blueprint (SVG chart
+  wheel, house-system/zodiac switcher, all 7 life reports), Timing
+  (today/quarter/year/decade), Places (city rankings, local space, parans),
+  Numerology (core + extended + tools), Human Design, Decisions,
+  Life Events, Compatibility (synastry modes + HD connection) — via an
+  interim typed fetch client. Engine suite now 61 tests.
+
 ### Fixed
 - Pre-existing workspace typecheck failures: api-zod barrel type-shadowing,
   p-retry v7 `AbortError` import, missing `@types/node`/`react` dev deps,

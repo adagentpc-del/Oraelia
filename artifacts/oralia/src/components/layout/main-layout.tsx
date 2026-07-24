@@ -1,16 +1,24 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { 
-  LayoutDashboard, 
-  User, 
-  PenLine, 
-  Activity, 
-  Heart, 
-  MapPin, 
-  Sun, 
-  BookOpen, 
+import {
+  LayoutDashboard,
+  User,
+  PenLine,
+  Activity,
+  Heart,
+  MapPin,
+  Sun,
+  BookOpen,
   Settings,
-  LogOut
+  LogOut,
+  Sparkles,
+  CalendarClock,
+  Globe2,
+  Hash,
+  Fingerprint,
+  Scale,
+  History,
+  HeartHandshake
 } from "lucide-react";
 import { useLogout, getGetMeQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -18,6 +26,14 @@ import { motion } from "framer-motion";
 
 const SIDEBAR_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/blueprint", label: "My Blueprint", icon: Sparkles },
+  { href: "/timing", label: "Timing", icon: CalendarClock },
+  { href: "/decisions", label: "Decisions", icon: Scale },
+  { href: "/compatibility", label: "Compatibility", icon: HeartHandshake },
+  { href: "/places", label: "Places", icon: Globe2 },
+  { href: "/human-design", label: "Human Design", icon: Fingerprint },
+  { href: "/numerology", label: "Numerology", icon: Hash },
+  { href: "/life-events", label: "Life Events", icon: History },
   { href: "/profile", label: "My Profile", icon: User },
   { href: "/checkin", label: "Check-In", icon: PenLine },
   { href: "/patterns", label: "Patterns", icon: Activity },
