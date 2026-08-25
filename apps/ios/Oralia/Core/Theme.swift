@@ -1,21 +1,38 @@
 import SwiftUI
 
-/// Oralia's luxury mystical palette: ivory/champagne ground, deep plum
-/// primary, navy accents, gold highlights.
+/// Oralia's luxury mystical palette.
+///
+/// Brand direction:
+/// - Gender neutral, luxury, professional, subtly mystical
+/// - Green dominant, not purple/plum dominant
+/// - Light mode: soft ivory, pale sage, muted emerald, moss, champagne gold
+/// - Dark mode: deep emerald, forest green, dark pine, soft glow, champagne gold
+/// - Avoid neon purple, childish zodiac/cartoon visuals, cheap tarot styling, and overly feminine pink/peach dominance.
 enum Theme {
-    static let plum = Color(red: 0.29, green: 0.12, blue: 0.31)
-    static let plumLight = Color(red: 0.45, green: 0.24, blue: 0.47)
-    static let navy = Color(red: 0.11, green: 0.15, blue: 0.29)
-    static let gold = Color(red: 0.78, green: 0.62, blue: 0.28)
-    static let champagne = Color(red: 0.97, green: 0.94, blue: 0.88)
-    static let ivory = Color(red: 0.99, green: 0.98, blue: 0.95)
+    static let midnightGreen = Color(red: 0.03, green: 0.10, blue: 0.09)       // #081917
+    static let darkPine = Color(red: 0.04, green: 0.16, blue: 0.14)            // #0B2A26
+    static let forestGreen = Color(red: 0.07, green: 0.24, blue: 0.21)         // #123C35
+    static let emerald = Color(red: 0.06, green: 0.36, blue: 0.30)             // #0F5C4D
+    static let mutedEmerald = Color(red: 0.18, green: 0.42, blue: 0.35)
+    static let moss = Color(red: 0.49, green: 0.57, blue: 0.53)                // #7E9186
+    static let sage = Color(red: 0.66, green: 0.73, blue: 0.68)                // #A9B9AE
+    static let champagne = Color(red: 0.78, green: 0.66, blue: 0.42)           // #C8A96B
+    static let brass = Color(red: 0.72, green: 0.56, blue: 0.33)               // #B89054
+    static let ivory = Color(red: 0.96, green: 0.95, blue: 0.91)               // #F6F2E9
+    static let stone = Color(red: 0.87, green: 0.84, blue: 0.78)               // #DDD6C8
+
+    /// Primary brand color for text and navigation in light contexts.
+    static let primary = emerald
+
+    /// Primary high-emphasis accent for dark contexts and call-to-action highlights.
+    static let primaryAccent = champagne
 
     static func scoreColor(_ score: Int) -> Color {
         switch score {
-        case ..<35: return Color(red: 0.65, green: 0.25, blue: 0.22)
-        case ..<55: return Color(red: 0.72, green: 0.52, blue: 0.2)
-        case ..<75: return gold
-        default: return Color(red: 0.27, green: 0.51, blue: 0.32)
+        case ..<35: return Color(red: 0.62, green: 0.25, blue: 0.20)
+        case ..<55: return brass
+        case ..<75: return champagne
+        default: return mutedEmerald
         }
     }
 }
@@ -29,7 +46,7 @@ struct SectionCard<Content: View>: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .font(.system(.headline, design: .serif))
-                .foregroundStyle(Theme.plum)
+                .foregroundStyle(Theme.primary)
             if let subtitle {
                 Text(subtitle)
                     .font(.subheadline)
@@ -42,7 +59,11 @@ struct SectionCard<Content: View>: View {
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color(.systemBackground))
-                .shadow(color: Theme.plum.opacity(0.08), radius: 8, y: 3)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Theme.champagne.opacity(0.22), lineWidth: 1)
+                )
+                .shadow(color: Theme.emerald.opacity(0.10), radius: 10, y: 4)
         )
     }
 }
@@ -55,14 +76,14 @@ struct ScoreRing: View {
         VStack(spacing: 6) {
             ZStack {
                 Circle()
-                    .stroke(Theme.champagne, lineWidth: 7)
+                    .stroke(Theme.stone, lineWidth: 7)
                 Circle()
                     .trim(from: 0, to: CGFloat(score) / 100)
                     .stroke(Theme.scoreColor(score), style: StrokeStyle(lineWidth: 7, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                 Text("\(score)")
                     .font(.system(.subheadline, design: .serif).bold())
-                    .foregroundStyle(Theme.navy)
+                    .foregroundStyle(Theme.darkPine)
             }
             .frame(width: 58, height: 58)
             Text(label)
@@ -87,7 +108,7 @@ struct ScoreBar: View {
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Theme.champagne)
+                    Capsule().fill(Theme.stone.opacity(0.75))
                     Capsule()
                         .fill(Theme.scoreColor(score))
                         .frame(width: geo.size.width * CGFloat(score) / 100)
