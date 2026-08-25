@@ -26,11 +26,11 @@ import { motion } from "framer-motion";
 
 const SIDEBAR_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/places", label: "Places Map", icon: Globe2 },
   { href: "/blueprint", label: "My Blueprint", icon: Sparkles },
   { href: "/timing", label: "Timing", icon: CalendarClock },
   { href: "/decisions", label: "Decisions", icon: Scale },
   { href: "/compatibility", label: "Compatibility", icon: HeartHandshake },
-  { href: "/places", label: "Places", icon: Globe2 },
   { href: "/human-design", label: "Human Design", icon: Fingerprint },
   { href: "/numerology", label: "Numerology", icon: Hash },
   { href: "/life-events", label: "Life Events", icon: History },
@@ -38,7 +38,7 @@ const SIDEBAR_ITEMS = [
   { href: "/checkin", label: "Check-In", icon: PenLine },
   { href: "/patterns", label: "Patterns", icon: Activity },
   { href: "/relationships", label: "Relationships", icon: Heart },
-  { href: "/locations", label: "Locations", icon: MapPin },
+  { href: "/locations", label: "Saved Locations", icon: MapPin },
   { href: "/chakras", label: "Chakras", icon: Sun },
   { href: "/library", label: "Library", icon: BookOpen },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -63,6 +63,7 @@ export function MainLayout({ children }: { children: ReactNode }) {
       <aside className="w-full md:w-64 bg-card border-r border-border md:min-h-screen flex flex-col">
         <div className="p-6">
           <h1 className="text-2xl font-serif font-bold text-primary tracking-wide">Oralia</h1>
+          <p className="text-xs text-muted-foreground mt-1">Energetic place strategy</p>
         </div>
         <nav className="flex-1 px-4 pb-4 space-y-1 flex flex-col gap-1 overflow-y-auto">
           {SIDEBAR_ITEMS.map((item) => {
@@ -71,7 +72,7 @@ export function MainLayout({ children }: { children: ReactNode }) {
               <Link 
                 key={item.href} 
                 href={item.href}
-                data-testid={`link-${item.label.toLowerCase().replace(" ", "-")}`}
+                data-testid={`link-${item.label.toLowerCase().replaceAll(" ", "-")}`}
                 className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
                   isActive 
                     ? "bg-primary text-primary-foreground" 
