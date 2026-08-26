@@ -1,6 +1,6 @@
 # Oralia Master Build Spec
 
-This file is the durable product/design/build authority for Oralia. It consolidates the original Claude build prompt, the later 2.0/3.0 engine work, the light/dark design mockups, and the current decision to ship the Astrocartography / Places map app first.
+This file is the durable product/design/build authority for Oralia. It consolidates the original Claude build prompt, the later 2.0/3.0 engine work, the light/dark design mockups, and the corrected release decision: **Oralia ships iOS-first as a full esoteric personal intelligence app**. The Places / Astrocartography map is a major module, not the entire product.
 
 ## Product
 
@@ -8,9 +8,9 @@ This file is the durable product/design/build authority for Oralia. It consolida
 **Category:** Energetic Personal Intelligence  
 **Tagline:** Know your pattern. Plan your life.
 
-Oralia is a premium self-knowledge and life-planning platform that maps a person’s energy, timing, relationships, locations, body rhythms, personality patterns, goals, and symbolic systems into practical guidance.
+Oralia is a premium iOS-first self-knowledge and life-planning app that maps a person’s astrology, Human Design, numerology, astrocartography, chakras, personality/archetype patterns, timing cycles, relationships, goals, and symbolic systems into a personalized optimized report and daily guide.
 
-It is not just a horoscope app, not just Human Design, and not just a wellness tracker. It is a personal operating system for self-understanding, timing, relationships, place strategy, and energetic alignment.
+It is not just a horoscope app, not just Human Design, not just an astrocartography map, and not just a wellness tracker. It is a personal operating system for self-understanding, timing, relationships, place strategy, and energetic alignment.
 
 ## Product magic
 
@@ -26,17 +26,92 @@ Every major output should follow the Signal to Action standard:
 
 ## First release focus
 
-Ship the **Astrocartography / Places map app** first.
+Ship an **iOS app first**.
 
-The first public utility should answer:
+The first shippable Oralia app must deliver two core experiences:
 
-- Where should I go for love, career, visibility, healing, money, creativity, writing, rest, reinvention, spirituality, and business?
-- What do my planetary lines mean?
-- Which cities are strongest for my current goals?
-- Should I visit, move, launch, network, date, retreat, write, or rest there?
-- What is guidance versus fixed fate?
+1. **Personalized Optimized Report**
+2. **Daily Guide**
 
-Do not block the first release on finishing all of Oralia. Human Design, numerology, timing, relationship overlays, deep reports, subscriptions, practitioner mode, PDF export, and wearable integrations can expand after the map app is stable.
+The Places / Astrocartography map remains a core module inside the app, but the release should not be reduced to only a map app.
+
+## Personalized Optimized Report
+
+The report should synthesize multiple systems into one cohesive user-readable intelligence profile. It must feel like one unified report, not a disconnected list of modules.
+
+Include, as available:
+
+- Astrology / natal chart
+- Human Design
+- Numerology
+- Astrocartography / Places
+- Chakras
+- Personality and archetype assessment layers
+- Relationship and compatibility patterns
+- Timing / forecast patterns
+- Strengths and weaknesses
+- Best hobbies
+- Best careers
+- Speaking and communication style
+- Relationship style
+- Best environments and location themes
+- Daily, weekly, monthly, and yearly life-category guidance
+
+The report should explain:
+
+1. What the system says
+2. What it means generally
+3. What it means for the user specifically
+4. How it shows up in life
+5. How to use it practically
+6. Higher expression
+7. Shadow expression
+8. Suggested action
+9. Confidence / limitations
+10. Relevant disclaimers
+
+## Daily Guide
+
+The iOS Today screen is the first-run value. It should deliver:
+
+- Daily energetic theme
+- Best use of today
+- Avoid today
+- Career / visibility guidance
+- Relationship guidance
+- Body / chakra / nervous-system prompt
+- Moon and transit note
+- Human Design / authority note where useful
+- Numerology day-cycle note where useful
+- Goal nudge
+- One practical action
+- One journal prompt
+- One ritual or reset
+
+This must be practical, not vague mystical text.
+
+## Places / Astrocartography module
+
+The Places module should include:
+
+- MapKit astrocartography map
+- Astrocartography lines where available: Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto, Chiron, North Node
+- Angles: ASC, DSC, MC, IC
+- Relocated angles
+- Ranked cities by category
+- Explanations of why a city ranks well
+- Practical recommendations: visit, move, launch, network, date, retreat, write, rest
+- Data-quality/confidence labels
+- Non-deterministic language
+
+Every city or line explanation should include:
+
+1. What this line/place means generally
+2. How it connects to the user’s chart
+3. Best uses
+4. Watch-outs
+5. Practical action
+6. Confidence / limitations
 
 ## Visual direction
 
@@ -109,28 +184,6 @@ Avoid:
 - Overly feminine pink/peach spiritual-coach styling
 - Fatalistic or fear-based copy
 
-## Map app scope
-
-The Places / AstroMap release should include:
-
-- Astrocartography lines where available: Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto, Chiron, North Node.
-- Angles: ASC, DSC, MC, IC.
-- Relocated angles.
-- Ranked cities by category.
-- Explanations of why a city ranks well.
-- Practical recommendations: visit, move, launch, network, date, retreat, write, rest.
-- Data-quality/confidence labels.
-- Non-deterministic language.
-
-Every city or line explanation should include:
-
-1. What this line/place means generally
-2. How it connects to the user’s chart
-3. Best uses
-4. Watch-outs
-5. Practical action
-6. Confidence / limitations
-
 ## Current architecture authority
 
 - `lib/astro-engine` is authoritative for deterministic calculations.
@@ -161,35 +214,37 @@ Avoid language like:
 ## Build priority
 
 1. Stabilize PR #1.
-2. Ensure auth is production-safe.
-3. Ensure `/api/astromap` works from a real user profile with birth coordinates.
-4. Ensure `/places` is clear, useful, mobile-responsive, and green-luxury styled.
-5. Deploy web-first unless iOS signing/App Store setup is already ready.
-6. Add iOS release after MapKit smoke tests.
-7. Add premium modules only after the map app is usable.
+2. Treat iOS as the primary release target.
+3. Verify the SwiftUI app builds on Mac/XcodeGen.
+4. Ensure the iOS Today dashboard presents the Daily Guide as the primary first-run value.
+5. Ensure the iOS report flow synthesizes multiple systems into a single optimized personal report.
+6. Keep Places / Astrocartography as a core module.
+7. Ensure auth and API deployment strategy works for iOS.
+8. Keep the web app as admin/demo/support surface, not the main first release.
 
 ## Production blockers
 
-Before public release:
+Before public iOS release:
 
+- iOS build verified on Mac/XcodeGen.
+- API deployment available to the iOS app.
 - `DATABASE_URL` configured.
 - `SESSION_SECRET` configured.
 - Production demo-auth fallback disabled.
 - DB migration run: `pnpm --filter @workspace/db run push`.
+- Auth/session flow works from iOS.
+- Daily guide route and report route smoke tested with a real profile.
 - AstroMap route smoke tested with a real profile.
-- Web build passes.
-- Auth route smoke tested.
 - Legal/footer/onboarding disclaimers visible.
-- No API keys exposed to frontend.
-- No automatic AI calls on page load.
+- No API keys exposed to frontend or app bundle.
+- No automatic uncached AI calls on app load.
 
-## Acceptance criteria for first release
+## Acceptance criteria for first iOS release
 
-- User can create an account/profile.
-- User can enter birth date, birth time, birth location, and current/target locations.
-- User can open Places/AstroMap.
-- User can see ranked places by category.
-- User can click a city or line and understand what it means.
-- User receives practical guidance, not vague mystical text.
-- UI matches green luxury Oralia in both light and dark modes.
-- App builds and deploys without production demo-auth leakage.
+- User can create profile and enter birth name, birthday, birth time, birth location, current location, goals, relationship/career context, and preferences.
+- App generates a personalized optimized report combining astrology, Human Design, numerology, Places/astrocartography, chakras, personality/archetypes, and timing.
+- App shows a daily guide with practical actions and calendar-style energetic guidance.
+- App includes the Places / Astrocartography module.
+- Light and dark modes match the green luxury Oralia mockup direction.
+- App communicates confidence/limitations clearly and does not make deterministic fate claims.
+- iOS build path is documented and smoke-tested on Mac/Xcode.
