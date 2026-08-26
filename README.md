@@ -1,19 +1,46 @@
-# Oralia — Personal Intelligence Platform
+# Oralia — iOS-First Personal Intelligence Platform
 
-Oralia turns astrology, Human Design, numerology, location, and timing into structured, practical guidance — deterministic symbolic calculation with psychologically responsible synthesis on top. It is not a horoscope feed, not fortune telling, and not a substitute for professional care.
+Oralia turns astrology, Human Design, numerology, astrocartography, chakras, personality/archetype patterns, timing, relationships, and goals into structured, practical guidance. It uses deterministic symbolic calculation with psychologically responsible synthesis on top.
+
+Oralia is not a horoscope feed, not fortune telling, not only a map app, and not a substitute for professional care.
 
 ## Current release focus
 
-The first shippable slice is the **Astrocartography / Places map app**.
+The first shippable product is the **iOS app**.
 
-This release should help a user understand:
+The first release should deliver:
 
-- which places support career, love, visibility, money, creativity, healing, spirituality, writing, rest, reinvention, and business;
-- what planetary lines and relocated angles mean;
-- how to use a place practically without treating the map as fixed fate;
-- where data quality or birth-time uncertainty limits confidence.
+1. **Personalized Optimized Report**
+   - Astrology / natal chart
+   - Human Design
+   - Numerology
+   - Astrocartography / Places
+   - Chakras
+   - Personality and archetype layers
+   - Relationship and compatibility layer where available
+   - Timing / forecast layer
+   - Strengths, weaknesses, best careers, hobbies, speaking style, relationships, locations, and life-category guidance
 
-The broader Oralia platform remains the long-term direction, but the map app is the fastest useful release.
+2. **Daily Guide**
+   - Daily energetic theme
+   - Best use of today
+   - Avoid today
+   - Career / visibility guidance
+   - Relationship guidance
+   - Body / chakra / nervous-system prompt
+   - Moon and transit note
+   - Goal nudge
+   - One practical action
+   - One journal prompt
+   - One ritual or reset
+
+3. **Places / Astrocartography Module**
+   - MapKit astrocartography map
+   - Ranked cities and location strategy
+   - Planetary line and city explanations
+   - Practical recommendations for visit, move, launch, network, date, write, retreat, and rest
+
+The broader web app remains useful as a demo/support surface, but iOS is the product priority.
 
 ## Brand direction
 
@@ -31,10 +58,10 @@ Build authority: `ORALIA_MASTER_BUILD_SPEC.md`.
 
 | Path | What it is |
 | --- | --- |
+| `apps/ios` | Native SwiftUI iOS app (XcodeGen). Primary release target. |
 | `lib/astro-engine` | Zero-dependency TypeScript calculation engine (ephemeris, charts, timing, astrocartography, synastry, numerology, Human Design, decisions) + golden-fixture suite |
 | `artifacts/api-server` | Express 5 API (`/api/*`) |
-| `artifacts/oralia` | React web frontend |
-| `apps/ios` | Native SwiftUI iOS app (XcodeGen) |
+| `artifacts/oralia` | React web frontend / support surface |
 | `lib/db` | Drizzle ORM schema (PostgreSQL) |
 | `lib/api-spec` / `lib/api-zod` / `lib/api-client-react` | OpenAPI spec + generated clients |
 | `docs/` | Method docs, ADRs, build status, privacy/security models |
