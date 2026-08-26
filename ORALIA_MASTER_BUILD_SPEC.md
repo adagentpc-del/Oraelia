@@ -115,64 +115,62 @@ Every city or line explanation should include:
 
 ## Visual direction
 
-Build with **both light and dark modes**.
+Build with **both light and dark modes**, but the **default must be light**.
 
 The approved reference is the dual-mode Oralia design image with the split screen: dark green version on the left and light ivory version on the right. Treat that image as design authority.
 
 ### Theme toggle behavior
 
-The app must expose an explicit Dark / Light toggle.
+The app must expose an explicit Light / Dark toggle.
 
+- **Light is the default** and must activate the soft ivory Oralia version.
 - **Dark** must activate the deep green Oralia version.
-- **Light** must activate the soft ivory Oralia version.
 - The screen structure should remain consistent across modes; only the palette, contrast, glow, and surface treatment should change.
-- Dark mode is not black/gray generic iOS dark mode. It is rich emerald, black pine, gold linework, and cosmic glow.
-- Light mode is not plain white. It is ivory/cream, pale sage, soft warm gold, and low-contrast elegant cards.
+- Dark mode is not black/gray generic iOS dark mode. It is rich emerald, black pine, subtle pearl accents, and cosmic glow.
+- Light mode is not plain white. It is ivory/cream, pale sage, soft pearl-champagne, and low-contrast elegant cards.
+- Do not use mustard yellow, harsh yellow-gold, orange gold, or heavy masculine contrast.
 
 ### Dark mode
 
-The premium green anchor mode:
+The premium green secondary mode:
 
 - Midnight Green Black: `#081917`
 - Dark Pine: `#0B2A26`
 - Forest Green: `#123C35`
 - Deep Emerald: `#0F5C4D`
-- Sage Mist: `#A9B9AE`
-- Moss Gray: `#7E9186`
+- Soft Emerald: muted green for fills and graphs
+- Sage Mist: soft desaturated sage
 - Soft Ivory: `#F6F2E9`
-- Stone: `#DDD6C8`
-- Champagne Gold: `#C8A96B`
-- Soft Brass: `#B89054`
+- Pearl Champagne: muted beige-champagne, never mustard
 
 Dark mode should use:
 
 - dark green full-screen backgrounds
-- gold celestial icons and dividers
+- subtle pearl/champagne celestial icons and dividers
 - faint star/orbit accents
 - rounded dark cards with soft green highlights
-- ivory text with champagne hierarchy
-- app-screen feel similar to the dark half of the approved image
+- ivory text with refined hierarchy
+- app-screen feel similar to the dark half of the approved image, but not overly masculine
 
 ### Light mode
 
-The airy ivory version:
+The primary airy ivory version:
 
 - Soft Ivory: `#F6F2E9`
 - Warm Cream: `#FAF7EF`
 - Pale Sage: `#E8EFE9`
-- Mist Stone: `#E1DDD3`
+- Mist Sage: very light green-gray wash
 - Deep Emerald Text: `#123C35`
 - Dark Pine Text: `#0B2A26`
-- Moss Gray Text: `#5F7068`
-- Champagne Gold: `#C8A96B`
-- Soft Brass: `#B89054`
-- Muted Sage: `#A9B9AE`
+- Moss Gray Text: muted gray-green
+- Pearl Champagne: muted beige-champagne only
+- Muted Sage: soft desaturated sage
 
 Light mode should use:
 
 - ivory/cream full-screen backgrounds
 - pale sage panels and lines
-- warm gold celestial accents
+- pearl-champagne celestial accents, not yellow
 - soft low-contrast card borders
 - deep emerald text hierarchy
 - app-screen feel similar to the light half of the approved image
@@ -199,10 +197,13 @@ Use mystical motifs lightly:
 - Human Design bodygraph styling
 - Chakra glow points
 - Mountain, sky, and horizon imagery
-- Champagne gold dividers and symbols
+- Pearl champagne dividers and symbols
 
 Avoid:
 
+- Mustard yellow
+- Harsh yellow-gold
+- Orange gold
 - Neon purple
 - Deep plum/navy as the main palette
 - Childish zodiac art
@@ -210,6 +211,7 @@ Avoid:
 - Cheap tarot templates
 - Cluttered crystal-shop aesthetics
 - Overly feminine pink/peach spiritual-coach styling
+- Heavy masculine styling
 - Fatalistic or fear-based copy
 
 ## Current architecture authority
@@ -241,7 +243,7 @@ Avoid language like:
 
 ## Build priority
 
-1. Stabilize PR #1.
+1. Stabilize the iOS app on `main`.
 2. Treat iOS as the primary release target.
 3. Verify the SwiftUI app builds on Mac/XcodeGen.
 4. Ensure the iOS Today dashboard presents the Daily Guide as the primary first-run value.
@@ -264,6 +266,7 @@ Before public iOS release:
 - Daily guide route and report route smoke tested with a real profile.
 - AstroMap route smoke tested with a real profile.
 - Legal/footer/onboarding disclaimers visible.
+- No GitHub links or developer-source references visible in consumer settings.
 - No API keys exposed to frontend or app bundle.
 - No automatic uncached AI calls on app load.
 
@@ -273,6 +276,7 @@ Before public iOS release:
 - App generates a personalized optimized report combining astrology, Human Design, numerology, Places/astrocartography, chakras, personality/archetypes, and timing.
 - App shows a daily guide with practical actions and calendar-style energetic guidance.
 - App includes the Places / Astrocartography module.
-- Dark/Light toggle works exactly as approved: dark is the deep green version, light is the ivory/sage version.
+- Light/Dark toggle works exactly as approved: light is the default ivory/sage version, dark is the deep green version.
+- App does not use mustard yellow or harsh gold accents.
 - App communicates confidence/limitations clearly and does not make deterministic fate claims.
 - iOS build path is documented and smoke-tested on Mac/Xcode.
