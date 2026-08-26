@@ -2,30 +2,39 @@ import SwiftUI
 
 struct TodayView: View {
     @StateObject private var loader = Loadable<DailyForecast>()
+    @State private var appeared = false
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                OraliaHeader(
-                    eyebrow: "Daily Guide",
-                    title: "Your energetic plan for today.",
-                    subtitle: "A practical synthesis of timing, numerology, transits, life areas, and your current decision climate."
-                )
+        ZStack {
+            CelestialBackground()
+            ScrollView {
+                VStack(spacing: 18) {
+                    OraliaHeader(
+                        eyebrow: "Daily Guide",
+                        title: "Your energetic plan for today.",
+                        subtitle: "A practical synthesis of timing, numerology, transits, life areas, and your current decision climate."
+                    )
+                    .opacity(appeared ? 1 : 0)
+                    .offset(y: appeared ? 0 : 12)
 
-                if let error = loader.error {
-                    ErrorBanner(message: error)
+                    if let error = loader.error {
+                        ErrorBanner(message: error)
+                    }
+                    if loader.isLoading {
+                        HeroOracleCard(title: "Reading today’s signal", subtitle: "Oralia is preparing your daily guide.") {
+                            ProgressView()
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .padding(.vertical, 18)
+                        }
+                    }
+                    if let forecast = loader.value {
+                        content(forecast)
+                    }
+                    SafetyFootnote()
                 }
-                if loader.isLoading {
-                    ProgressView().padding(40)
-                }
-                if let forecast = loader.value {
-                    content(forecast)
-                }
-                SafetyFootnote()
+                .padding()
             }
-            .padding()
         }
-        .background(Theme.appBackground.ignoresSafeArea())
         .navigationTitle("Guide")
         .toolbar {
             Button {
@@ -34,7 +43,12 @@ struct TodayView: View {
                 Image(systemName: "arrow.clockwise")
             }
         }
-        .onAppear { if loader.value == nil { load() } }
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.45)) {
+                appeared = true
+            }
+            if loader.value == nil { load() }
+        }
     }
 
     private func load() {
@@ -43,8 +57,11 @@ struct TodayView: View {
 
     @ViewBuilder
     private func content(_ forecast: DailyForecast) -> some View {
-        SectionCard(title: "Today’s Theme", subtitle: forecast.date) {
-            VStack(alignment: .leading, spacing: 12) {
+        HeroOracleCard(
+            title: "Today’s Theme",
+            subtitle: "Personal day \(forecast.personalDay) • \(forecast.date)"
+        ) {
+            VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 14) {
                     ScoreRing(label: "Overall", score: forecast.scores.overall)
                     ScoreRing(label: "Decisions", score: forecast.scores.decisionScore)
@@ -53,9 +70,9 @@ struct TodayView: View {
                 }
                 .frame(maxWidth: .infinity)
 
-                Text("Personal day \(forecast.personalDay): use today as a practical calibration point. Let the strongest categories guide where you place your attention, and let the lower scores tell you where to simplify.")
+                Text("Let the strongest categories guide where you place attention. Let the lower scores tell you where to simplify, not where to panic.")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.secondaryText)
             }
         }
 
@@ -70,16 +87,18 @@ struct TodayView: View {
         if !forecast.avoid.isEmpty || !forecast.risks.isEmpty {
             SectionCard(title: "Avoid Today") {
                 let avoidItems = forecast.avoid.isEmpty ? forecast.risks : forecast.avoid
-                ForEach(avoidItems.prefix(4), id: \.self) { item in
-                    Label(item, systemImage: "minus.circle")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(avoidItems.prefix(4), id: \.self) { item in
+                        Label(item, systemImage: "minus.circle")
+                            .font(.footnote)
+                            .foregroundStyle(Theme.secondaryText)
+                    }
                 }
             }
         }
 
         SectionCard(title: "Career, Visibility, Money") {
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 ScoreBar(label: "Career", score: forecast.scores.career)
                 ScoreBar(label: "Visibility / Luck", score: forecast.scores.luck)
                 ScoreBar(label: "Money", score: forecast.scores.money)
@@ -88,7 +107,7 @@ struct TodayView: View {
         }
 
         SectionCard(title: "Relationship, Body, Creativity") {
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 ScoreBar(label: "Relationships", score: forecast.scores.relationships)
                 ScoreBar(label: "Health / Body", score: forecast.scores.health)
                 ScoreBar(label: "Communication", score: forecast.scores.communication)
@@ -97,11 +116,13 @@ struct TodayView: View {
         }
 
         if !forecast.opportunities.isEmpty {
-            SectionCard(title: "Opportunities") {
-                ForEach(forecast.opportunities.prefix(4), id: \.self) { item in
-                    Label(item, systemImage: "sparkles")
-                        .font(.footnote)
-                        .foregroundStyle(Theme.primary)
+            SectionCard(title: "Openings") {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(forecast.opportunities.prefix(4), id: \.self) { item in
+                        Label(item, systemImage: "sparkles")
+                            .font(.footnote)
+                            .foregroundStyle(Theme.primary)
+                    }
                 }
             }
         }
@@ -110,9 +131,11 @@ struct TodayView: View {
             if let first = forecast.recommendedActions.first {
                 Label(first, systemImage: "checkmark.seal")
                     .font(.footnote)
+                    .foregroundStyle(Theme.primaryText)
             } else {
                 Label("Choose one task that moves your most important goal forward, then stop before you dilute your energy.", systemImage: "checkmark.seal")
                     .font(.footnote)
+                    .foregroundStyle(Theme.primaryText)
             }
         }
 
@@ -130,39 +153,41 @@ struct TodayView: View {
 
         if !forecast.powerHours.isEmpty {
             SectionCard(title: "Power Hours") {
-                ForEach(forecast.powerHours.prefix(5)) { hour in
-                    HStack(alignment: .top) {
-                        Text(hour.label)
-                            .font(.caption.monospacedDigit().bold())
-                            .foregroundStyle(Theme.champagne)
-                            .frame(width: 92, alignment: .leading)
-                        VStack(alignment: .leading) {
-                            Text("\(hour.ruler) hour").font(.caption.bold())
-                            Text(hour.good).font(.caption2).foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 9) {
+                    ForEach(forecast.powerHours.prefix(5)) { hour in
+                        HStack(alignment: .top, spacing: 12) {
+                            Text(hour.label)
+                                .font(.caption.monospacedDigit().bold())
+                                .foregroundStyle(Theme.accent)
+                                .frame(width: 92, alignment: .leading)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("\(hour.ruler) hour").font(.caption.bold()).foregroundStyle(Theme.primaryText)
+                                Text(hour.good).font(.caption2).foregroundStyle(Theme.secondaryText)
+                            }
                         }
                     }
-                    .padding(.vertical, 2)
                 }
             }
         }
 
         if !forecast.transits.isEmpty || !forecast.retrogrades.isEmpty {
-            SectionCard(title: "Moon, Transit, and Retrograde Notes") {
+            SectionCard(title: "Transit Notes") {
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(forecast.transits.prefix(5)) { transit in
                         HStack {
                             Text("\(transit.transiting) \(transit.type) \(transit.natal)")
                                 .font(.caption)
+                                .foregroundStyle(Theme.primaryText)
                             Spacer()
                             Text(String(format: "%.1f°", transit.orb))
                                 .font(.caption2.monospacedDigit())
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Theme.secondaryText)
                         }
                     }
                     ForEach(forecast.retrogrades.filter { $0.retrograde }.prefix(4)) { retro in
                         Text("\(retro.body) retrograde in \(retro.sign)")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.secondaryText)
                     }
                 }
             }
