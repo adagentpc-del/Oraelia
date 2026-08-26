@@ -3,11 +3,13 @@ import SwiftUI
 @main
 struct OraliaApp: App {
     @AppStorage("oraliaOnboardingComplete") private var onboardingComplete = false
+    @AppStorage("oraliaAppearance") private var appearance = "dark"
 
     var body: some Scene {
         WindowGroup {
             RootView(onboardingComplete: $onboardingComplete)
                 .tint(Theme.primary)
+                .preferredColorScheme(appearance == "light" ? .light : .dark)
         }
     }
 }
@@ -64,6 +66,8 @@ struct TimingHubView: View {
             }
         }
         .navigationTitle("Timing")
+        .scrollContentBackground(.hidden)
+        .background(Theme.appBackground)
     }
 }
 
@@ -104,5 +108,7 @@ struct MoreView: View {
             }
         }
         .navigationTitle("Oralia")
+        .scrollContentBackground(.hidden)
+        .background(Theme.appBackground)
     }
 }
