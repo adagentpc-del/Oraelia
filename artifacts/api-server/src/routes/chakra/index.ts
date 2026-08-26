@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireUserId } from "../../lib/auth";
 import { eq, desc } from "drizzle-orm";
 import { db, usersTable, chakraAssessmentsTable } from "@workspace/db";
 import { CreateChakraAssessmentBody } from "@workspace/api-zod";
@@ -60,12 +61,12 @@ const CHAKRA_PRACTICES: Record<string, { practice: string; prompt: string; affir
 
 const router: IRouter = Router();
 
-router.get("/chakra-assessments", async (_req, res): Promise<void> => {
-  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
-  if (!user) { res.json([]); return; }
+router.get("/chakra-assessments", async (req, res): Promise<void> => {
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
 
   const assessments = await db.select().from(chakraAssessmentsTable)
-    .where(eq(chakraAssessmentsTable.userId, user.id))
+    .where(eq(chakraAssessmentsTable.userId, userId))
     .orderBy(desc(chakraAssessmentsTable.createdAt));
   res.json(assessments);
 });
@@ -74,8 +75,8 @@ router.post("/chakra-assessments", async (req, res): Promise<void> => {
   const parsed = CreateChakraAssessmentBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
-  if (!user) { res.status(400).json({ error: "No user found" }); return; }
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
 
   const scores: Record<string, number> = {
     root: parsed.data.root,
@@ -99,7 +100,7 @@ router.post("/chakra-assessments", async (req, res): Promise<void> => {
   const practice = CHAKRA_PRACTICES[lowestName] || CHAKRA_PRACTICES["Heart"];
 
   const [assessment] = await db.insert(chakraAssessmentsTable).values({
-    userId: user.id,
+    userId: userId,
     ...parsed.data,
     strongestChakra: strongestName,
     lowestChakra: lowestName,
@@ -112,12 +113,12 @@ router.post("/chakra-assessments", async (req, res): Promise<void> => {
   res.status(201).json(assessment);
 });
 
-router.get("/chakra-assessments/latest", async (_req, res): Promise<void> => {
-  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
-  if (!user) { res.status(404).json({ error: "No user found" }); return; }
+router.get("/chakra-assessments/latest", async (req, res): Promise<void> => {
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
 
   const [latest] = await db.select().from(chakraAssessmentsTable)
-    .where(eq(chakraAssessmentsTable.userId, user.id))
+    .where(eq(chakraAssessmentsTable.userId, userId))
     .orderBy(desc(chakraAssessmentsTable.createdAt))
     .limit(1);
 

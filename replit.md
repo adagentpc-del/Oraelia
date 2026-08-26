@@ -2,7 +2,7 @@
 
 ## Overview
 
-Oralia is a premium personal intelligence web app combining astrology, Human Design, numerology, chakras, daily check-ins, relationship overlays, location strategy, and AI-generated guidance (daily, weekly, monthly).
+Oralia is a premium personal intelligence platform combining astrology, Human Design, numerology, chakras, daily check-ins, relationship overlays, location strategy, and AI-generated guidance (daily, weekly, monthly). Version 2.0 adds a full esoteric computation engine (`lib/astro-engine`) — natal astrology, timing/forecasting, astrocartography, synastry, decision intelligence — and a native SwiftUI iOS app (`apps/ios`).
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
@@ -33,6 +33,20 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `artifacts/oralia` — React+Vite frontend (served at `/`)
 - `artifacts/api-server` — Express 5 API (served at `/api`)
 - `artifacts/mockup-sandbox` — Component preview sandbox
+- `apps/ios` — Native SwiftUI iOS app (XcodeGen project; see `apps/ios/README.md`)
+
+### Astro Engine (`lib/astro-engine`)
+Pure-TypeScript, zero-dependency computation library:
+- **Ephemeris** — Julian dates, JPL Keplerian elements (1800–2050), truncated lunar theory (Meeus), Chiron, mean Node/Lilith, speeds/retrogrades, declination/out-of-bounds, moon phases
+- **Natal** — Placidus/whole-sign houses, angles + vertex, dignities, dispositors/mutual receptions, element/modality/hemisphere balance, dominants, chart shape (Jones), Arabic Parts, sect
+- **Aspects** — 12 aspect types with orbs, intensity/harmony scoring, applying/separating; patterns: Grand Trine, T-Square, Grand Cross, Yod, Kite, Mystic Rectangle, Stellium
+- **Timing** — transits, annual/monthly profections, solar/lunar returns, secondary progressions, solar arc, lunations + eclipse detection (validated vs. real 2026 eclipses), planetary hours, daily category scoring
+- **Astrocartography** — ASC/DSC/MC/IC lines, relocation angles, 80-city scored database with per-category rankings
+- **Synastry** — cross-aspects, house overlays, composite + Davison, 11 compatibility scores, green/red flags
+- **Numerology** — full core numbers, karmic debts, pinnacles/challenges/cycles, personal year/month/day, name/address/phone scoring, launch-date optimization
+- **Human Design** — gate wheel, 88°-solar-arc design chart, type/strategy/authority, profile, definition, channels/centers, incarnation cross, variables
+- **Decision engine** — synthesizes transits + profections + retrogrades + eclipses + numerology into opportunity/risk/confidence with better-window scanning
+- **Interpretation** — house/planet/sign deep dives and 7 synthesized life-category reports (love, career, money, fame, family, health, spirituality)
 
 ### Shared Libraries
 - `lib/db` — Drizzle ORM schema + migrations
@@ -87,6 +101,19 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `library` — content library with search/filter
 - `patterns` — GET summary, POST generate with AI analysis + regenerate
 - `dashboard` — aggregated summary (reads from generated_content cache first, falls back to legacy)
+- `natal` — GET /natal/chart (full computed chart), /natal/reports[/:category], /natal/deep-dives
+- `forecast` — GET /forecast/daily|weekly|monthly|yearly (accepts ?date=YYYY-MM-DD)
+- `astromap` — GET /astromap (lines + 80 scored cities), GET /astromap/city
+- `synastry` — POST /synastry (ad-hoc partner), GET /synastry/relationship/:id
+- `numerology` — GET /numerology, POST score-name, score-address, compatibility, launch-dates
+- `humanDesign` — GET /human-design
+- `decision` — POST /decision ({ question, category, date? })
+- `profile` — also PUT /profile/birth-location ({ latitude, longitude, utcOffset }) for precise houses
+- `timing` — GET /timing/transit-events (exact hits + retrograde passes), GET /timing/timeline (multi-year planning), GET /forecast/quarterly, GET /returns/solar, /returns/lunar (relocatable return charts)
+- `humanDesign` — also POST /human-design/connection and GET /human-design/connection/:relationshipId (connection charts)
+- `lifeEvents` — CRUD /life-events, GET /life-events/:id/analysis (timing factors at event), GET /life-events/patterns/:category
+
+Natal chart supports `?houses=placidus|whole-sign|equal|porphyry` and `?zodiac=tropical|sidereal`, plus GET /natal/compare and /natal/draconic. All chart responses include calculation `meta` (engine/method version, source hash) and `dataQuality` (birth-time confidence model). See `docs/` for method documentation, ADRs, and build status; `lib/astro-engine/test/` holds the 55-test golden-fixture suite (`pnpm --filter @workspace/astro-engine run test`).
 
 ## Key Commands
 
@@ -98,7 +125,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 
 ## Important Notes
 
-- Auth is placeholder (auto-logs in as first user in DB)
+- Auth is real: scrypt passwords + HMAC-signed cookie sessions (`src/lib/auth.ts`). Production requires `SESSION_SECRET`; outside production, sessionless requests fall back to the first (seeded demo) user so local dev works without login
 - AI uses OpenAI when `AI_INTEGRATIONS_OPENAI_BASE_URL` is available, falls back to rich demo content with 30s timeout
 - `lib/api-zod/src/index.ts` barrel export gets overwritten by codegen — must re-fix after each codegen run
 - All frontend pages use generated hooks from `@workspace/api-client-react` (not custom fetch)

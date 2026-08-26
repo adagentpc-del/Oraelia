@@ -11,6 +11,16 @@ import locationsRouter from "./locations";
 import libraryRouter from "./library";
 import patternsRouter from "./patterns";
 import dashboardRouter from "./dashboard";
+import natalRouter from "./natal";
+import forecastRouter from "./forecast";
+import astromapRouter from "./astromap";
+import synastryRouter from "./synastry";
+import numerologyRouter from "./numerology";
+import humanDesignRouter from "./humanDesign";
+import decisionRouter from "./decision";
+import timingRouter from "./timing";
+import lifeEventsRouter from "./lifeEvents";
+import exportRouter from "./export";
 
 const router: IRouter = Router();
 
@@ -26,5 +36,15 @@ router.use(locationsRouter);
 router.use(libraryRouter);
 router.use(patternsRouter);
 router.use(dashboardRouter);
+router.use(natalRouter);
+router.use(forecastRouter);
+router.use(astromapRouter);
+router.use(synastryRouter);
+router.use(numerologyRouter);
+router.use(humanDesignRouter);
+router.use(decisionRouter);
+router.use(timingRouter);
+router.use(lifeEventsRouter);
+router.use(exportRouter);
 
 export default router;

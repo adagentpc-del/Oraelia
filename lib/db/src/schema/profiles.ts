@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, doublePrecision } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -10,6 +10,10 @@ export const profilesTable = pgTable("profiles", {
   birthday: text("birthday").notNull(),
   birthTime: text("birth_time"),
   birthCity: text("birth_city"),
+  birthLatitude: doublePrecision("birth_latitude"),
+  birthLongitude: doublePrecision("birth_longitude"),
+  birthUtcOffset: doublePrecision("birth_utc_offset"),
+  birthTimeConfidence: text("birth_time_confidence"), // exact_documented | exact_recalled | approximate_within_15_minutes | approximate_within_1_hour | unknown | rectified
   currentCity: text("current_city"),
   relationshipStatus: text("relationship_status"),
   careerStage: text("career_stage"),

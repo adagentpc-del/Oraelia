@@ -16,7 +16,9 @@ import { toast } from "sonner";
 import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from "recharts";
 
 export default function ChakrasPage() {
-  const { data: latest, isLoading } = useGetLatestChakraAssessment({ query: { retry: false } });
+  const { data: latest, isLoading } = useGetLatestChakraAssessment({
+    query: { retry: false, queryKey: getGetLatestChakraAssessmentQueryKey() },
+  });
   const queryClient = useQueryClient();
   const createAssessment = useCreateChakraAssessment({
     mutation: {

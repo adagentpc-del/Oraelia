@@ -16,6 +16,14 @@ import LocationsPage from "@/pages/locations";
 import ChakrasPage from "@/pages/chakras";
 import LibraryPage from "@/pages/library";
 import SettingsPage from "@/pages/settings";
+import BlueprintPage from "@/pages/blueprint";
+import TimingPage from "@/pages/timing";
+import PlacesPage from "@/pages/places";
+import NumerologyPage from "@/pages/numerology";
+import HumanDesignPage from "@/pages/human-design";
+import DecisionsPage from "@/pages/decisions";
+import LifeEventsPage from "@/pages/life-events";
+import CompatibilityPage from "@/pages/compatibility";
 
 import { MainLayout } from "@/components/layout/main-layout";
 
@@ -53,6 +61,30 @@ function Router() {
       </Route>
       <Route path="/settings">
         <MainLayout><SettingsPage /></MainLayout>
+      </Route>
+      <Route path="/blueprint">
+        <MainLayout><BlueprintPage /></MainLayout>
+      </Route>
+      <Route path="/timing">
+        <MainLayout><TimingPage /></MainLayout>
+      </Route>
+      <Route path="/places">
+        <MainLayout><PlacesPage /></MainLayout>
+      </Route>
+      <Route path="/numerology">
+        <MainLayout><NumerologyPage /></MainLayout>
+      </Route>
+      <Route path="/human-design">
+        <MainLayout><HumanDesignPage /></MainLayout>
+      </Route>
+      <Route path="/decisions">
+        <MainLayout><DecisionsPage /></MainLayout>
+      </Route>
+      <Route path="/life-events">
+        <MainLayout><LifeEventsPage /></MainLayout>
+      </Route>
+      <Route path="/compatibility">
+        <MainLayout><CompatibilityPage /></MainLayout>
       </Route>
       <Route component={NotFound} />
     </Switch>

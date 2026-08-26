@@ -1,15 +1,16 @@
 import { Router, type IRouter } from "express";
+import { requireUserId } from "../../lib/auth";
 import { eq } from "drizzle-orm";
 import { db, usersTable, goalsTable } from "@workspace/db";
 import { CreateGoalBody, UpdateGoalBody, UpdateGoalParams, DeleteGoalParams } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-router.get("/goals", async (_req, res): Promise<void> => {
-  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
-  if (!user) { res.json([]); return; }
+router.get("/goals", async (req, res): Promise<void> => {
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
 
-  const goals = await db.select().from(goalsTable).where(eq(goalsTable.userId, user.id)).orderBy(goalsTable.createdAt);
+  const goals = await db.select().from(goalsTable).where(eq(goalsTable.userId, userId)).orderBy(goalsTable.createdAt);
   res.json(goals);
 });
 
@@ -17,10 +18,10 @@ router.post("/goals", async (req, res): Promise<void> => {
   const parsed = CreateGoalBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
-  if (!user) { res.status(400).json({ error: "No user found" }); return; }
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
 
-  const [goal] = await db.insert(goalsTable).values({ userId: user.id, ...parsed.data }).returning();
+  const [goal] = await db.insert(goalsTable).values({ userId: userId, ...parsed.data }).returning();
   res.status(201).json(goal);
 });
 

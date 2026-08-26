@@ -12,6 +12,7 @@ import {
   getPatternSummaryPrompt,
 } from "./prompts";
 import { logger } from "./logger";
+import { PROMPT_INJECTION_GUARD, sanitizeForPrompt } from "./promptSafety";
 
 interface GenerateOptions {
   userId: number;
@@ -108,7 +109,7 @@ function buildUserMessage(ctx: UserContext, type: PromptType, extraContext?: str
 
   let message = `${instruction}\n\n${base}`;
   if (extraContext) {
-    message += `\n\n== SPECIFIC CONTEXT ==\n${extraContext}`;
+    message += `\n\n== SPECIFIC CONTEXT ==\n${sanitizeForPrompt(extraContext, 2500)}`;
   }
   return message;
 }
@@ -143,7 +144,7 @@ export async function generateContent(options: GenerateOptions): Promise<Generat
             model: "gpt-5-mini",
             max_completion_tokens: 8192,
             messages: [
-              { role: "system", content: prompt.system },
+              { role: "system", content: prompt.system + PROMPT_INJECTION_GUARD },
               { role: "user", content: userMessage },
             ],
             response_format: { type: "json_object" },

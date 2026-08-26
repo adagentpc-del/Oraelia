@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { requireUserId } from "../../lib/auth";
 import { eq, desc } from "drizzle-orm";
 import { db, usersTable, dailyCheckinsTable } from "@workspace/db";
 import { generateContent } from "../../lib/ai-engine";
@@ -51,8 +52,9 @@ function computeBasePatterns(checkins: Array<{ date: string; mood: number; energ
   };
 }
 
-router.get("/patterns/summary", async (_req, res): Promise<void> => {
-  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
+router.get("/patterns/summary", async (req, res): Promise<void> => {
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
   const emptyResponse = {
     avgMood: 0, avgEnergy: 0, avgStress: 0, avgSleepQuality: 0,
     totalCheckins: 0, bestDayOfWeek: null, worstDayOfWeek: null,
@@ -68,10 +70,8 @@ router.get("/patterns/summary", async (_req, res): Promise<void> => {
     cached: false,
   };
 
-  if (!user) { res.json(emptyResponse); return; }
-
   const checkins = await db.select().from(dailyCheckinsTable)
-    .where(eq(dailyCheckinsTable.userId, user.id))
+    .where(eq(dailyCheckinsTable.userId, userId))
     .orderBy(desc(dailyCheckinsTable.createdAt))
     .limit(30);
 
@@ -109,21 +109,21 @@ router.get("/patterns/summary", async (_req, res): Promise<void> => {
 });
 
 router.post("/patterns/generate", async (req, res): Promise<void> => {
-  const [user] = await db.select().from(usersTable).orderBy(usersTable.id).limit(1);
-  if (!user) { res.status(400).json({ error: "No user found" }); return; }
+  const userId = await requireUserId(req, res);
+  if (userId === null) return;
 
   const today = new Date().toISOString().split("T")[0];
   const forceRegenerate = req.body?.regenerate === true;
 
   const checkins = await db.select().from(dailyCheckinsTable)
-    .where(eq(dailyCheckinsTable.userId, user.id))
+    .where(eq(dailyCheckinsTable.userId, userId))
     .orderBy(desc(dailyCheckinsTable.createdAt))
     .limit(30);
 
   const base = computeBasePatterns(checkins);
 
   const result = await generateContent({
-    userId: user.id,
+    userId: userId,
     type: "pattern_summary",
     referenceDate: today,
     forceRegenerate,
