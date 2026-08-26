@@ -10,6 +10,13 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            Section("Appearance") {
+                ThemeModePicker()
+                Text("Dark uses the deep green Oralia version. Light uses the soft ivory, sage, and gold version from the approved design reference.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+
             Section("API Server") {
                 TextField("Base URL", text: $apiBaseURL)
                     .textInputAutocapitalization(.never)
@@ -58,6 +65,8 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
+        .scrollContentBackground(.hidden)
+        .background(Theme.appBackground)
         .onAppear { if profileLoader.value == nil { loadProfile() } }
     }
 
