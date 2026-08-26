@@ -7,24 +7,15 @@ struct SettingsView: View {
     @State private var birthCity = ""
     @State private var geocodeStatus: String?
     @State private var isGeocoding = false
+    @State private var showDeveloperConnection = false
 
     var body: some View {
         Form {
             Section("Appearance") {
                 ThemeModePicker()
-                Text("Dark uses the deep green Oralia version. Light uses the soft ivory, sage, and gold version from the approved design reference.")
+                Text("Light is the default ivory and sage Oralia design. Dark switches to the deep green version.")
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section("API Server") {
-                TextField("Base URL", text: $apiBaseURL)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .keyboardType(.URL)
-                Text("Point this at your Oralia API deployment. Connections are configured server-side.")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.secondaryText)
             }
 
             Section("Profile") {
@@ -35,9 +26,9 @@ struct SettingsView: View {
                     if let lat = profile.birthLatitude, let lon = profile.birthLongitude {
                         LabeledContent("Birth coordinates", value: String(format: "%.3f, %.3f", lat, lon))
                     } else {
-                        Text("No birth coordinates set — houses computed for a default location.")
+                        Text("Add your birth city so Oralia can calculate houses, location themes, and timing more accurately.")
                             .font(.caption)
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Theme.secondaryText)
                     }
                 } else if profileLoader.isLoading {
                     ProgressView()
@@ -48,25 +39,35 @@ struct SettingsView: View {
             }
 
             Section("Birth Location") {
-                TextField("Birth city (e.g. Chicago, USA)", text: $birthCity)
+                TextField("Birth city", text: $birthCity, prompt: Text("Saint Louis Park, Minnesota"))
                 Button {
                     geocodeAndSave()
                 } label: {
-                    if isGeocoding { ProgressView() } else { Text("Look up & save coordinates") }
+                    if isGeocoding { ProgressView() } else { Text("Save birth location") }
                 }
                 .disabled(birthCity.trimmingCharacters(in: .whitespaces).isEmpty || isGeocoding)
                 if let status = geocodeStatus {
-                    Text(status).font(.caption2).foregroundStyle(.secondary)
+                    Text(status).font(.caption2).foregroundStyle(Theme.secondaryText)
                 }
             }
 
-            Section {
-                Link("Oralia API on GitHub", destination: URL(string: "https://github.com/adagentpc-del/Oraelia")!)
+            Section("Advanced") {
+                Toggle("Show local connection settings", isOn: $showDeveloperConnection)
+                if showDeveloperConnection {
+                    TextField("Server URL", text: $apiBaseURL)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .keyboardType(.URL)
+                    Text("For local testing only. This will be hidden or replaced by production configuration before App Store release.")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.secondaryText)
+                }
             }
         }
         .navigationTitle("Settings")
         .scrollContentBackground(.hidden)
         .background(Theme.appBackground)
+        .tint(Theme.primary)
         .onAppear { if profileLoader.value == nil { loadProfile() } }
     }
 
@@ -95,7 +96,7 @@ struct SettingsView: View {
                         "/profile/birth-location",
                         body: ["latitude": lat, "longitude": lon, "utcOffset": utcOffset]
                     )
-                    geocodeStatus = String(format: "Saved %.3f, %.3f (UTC%+.1f). Charts now use this location.", lat, lon, utcOffset)
+                    geocodeStatus = String(format: "Saved %.3f, %.3f. Oralia will use this for chart and place calculations.", lat, lon)
                     loadProfile()
                 } catch {
                     geocodeStatus = "Save failed: \(error.localizedDescription)"
