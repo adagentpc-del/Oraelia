@@ -16,20 +16,23 @@ struct OnboardingView: View {
     @Binding var isComplete: Bool
     @State private var profile = OnboardingProfile()
     @State private var step = 0
+    @State private var appeared = false
 
     private let tones = ["Practical mystical", "Direct", "Soft", "Luxury oracle", "Analytical"]
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Theme.appBackground.ignoresSafeArea()
+                CelestialBackground()
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: 22) {
                         OraliaHeader(
                             eyebrow: "Oralia setup",
                             title: "Build your personal intelligence profile.",
-                            subtitle: "Enter the core details Oralia needs to synthesize astrology, Human Design, numerology, places, chakras, personality patterns, timing, and daily guidance."
+                            subtitle: "A calm first pass for your report, daily guide, timing, relationships, and place strategy."
                         )
+                        .opacity(appeared ? 1 : 0)
+                        .offset(y: appeared ? 0 : 12)
 
                         progress
 
@@ -41,18 +44,24 @@ struct OnboardingView: View {
                             default: preferenceStep
                             }
                         }
+                        .transition(.opacity.combined(with: .move(edge: .trailing)))
 
                         HStack {
                             if step > 0 {
-                                Button("Back") { step -= 1 }
-                                    .buttonStyle(.bordered)
+                                Button("Back") {
+                                    withAnimation(.easeOut(duration: 0.24)) { step -= 1 }
+                                }
+                                .buttonStyle(.bordered)
+                                .tint(Theme.primary)
                             }
                             Spacer()
                             Button(step == 3 ? "Enter Oralia" : "Continue") {
-                                if step < 3 {
-                                    step += 1
-                                } else {
-                                    complete()
+                                withAnimation(.easeOut(duration: 0.24)) {
+                                    if step < 3 {
+                                        step += 1
+                                    } else {
+                                        complete()
+                                    }
                                 }
                             }
                             .buttonStyle(.borderedProminent)
@@ -66,6 +75,11 @@ struct OnboardingView: View {
             }
             .navigationTitle("Welcome")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.45)) {
+                    appeared = true
+                }
+            }
         }
     }
 
@@ -73,14 +87,16 @@ struct OnboardingView: View {
         HStack(spacing: 8) {
             ForEach(0..<4, id: \.self) { index in
                 Capsule()
-                    .fill(index <= step ? Theme.primary : Theme.stone)
+                    .fill(index <= step ? Theme.primary : Theme.stone.opacity(0.50))
                     .frame(height: 5)
+                    .animation(.easeOut(duration: 0.25), value: step)
             }
         }
+        .padding(.vertical, 4)
     }
 
     private var identityStep: some View {
-        SectionCard(title: "Identity and birth data", subtitle: "This is the foundation for the optimized report.") {
+        HeroOracleCard(title: "Identity", subtitle: "The foundation for your optimized report.") {
             VStack(spacing: 12) {
                 TextField("Birth name", text: $profile.birthName)
                     .textFieldStyle(.roundedBorder)
@@ -94,7 +110,7 @@ struct OnboardingView: View {
     }
 
     private var locationStep: some View {
-        SectionCard(title: "Location intelligence", subtitle: "Used for houses, timing, and Places / astrocartography.") {
+        HeroOracleCard(title: "Location", subtitle: "Used for houses, timing, and Places.") {
             VStack(spacing: 12) {
                 TextField("Birth location", text: $profile.birthLocation)
                     .textFieldStyle(.roundedBorder)
@@ -105,7 +121,7 @@ struct OnboardingView: View {
     }
 
     private var contextStep: some View {
-        SectionCard(title: "Life context", subtitle: "Oralia uses this to make the report practical instead of generic.") {
+        HeroOracleCard(title: "Life context", subtitle: "This is what makes Oralia practical instead of generic.") {
             VStack(spacing: 12) {
                 TextField("Top goals right now", text: $profile.primaryGoals, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
@@ -121,7 +137,7 @@ struct OnboardingView: View {
     }
 
     private var preferenceStep: some View {
-        SectionCard(title: "Guidance style", subtitle: "Choose how Oralia should sound when it gives daily guidance.") {
+        HeroOracleCard(title: "Guidance style", subtitle: "Choose how Oralia should sound when it guides you.") {
             Picker("Tone", selection: $profile.guidanceTone) {
                 ForEach(tones, id: \.self) { tone in
                     Text(tone).tag(tone)
