@@ -27,6 +27,24 @@ enum Theme {
     /// Primary high-emphasis accent for dark contexts and call-to-action highlights.
     static let primaryAccent = champagne
 
+    /// Backward-compatible aliases for older screens. These intentionally map to the new green luxury palette.
+    static let plum = emerald
+    static let plumLight = mutedEmerald
+    static let navy = darkPine
+    static let gold = champagne
+
+    static let appBackground = LinearGradient(
+        colors: [ivory, Color(red: 0.91, green: 0.94, blue: 0.91)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    static let darkAppBackground = LinearGradient(
+        colors: [midnightGreen, darkPine],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
     static func scoreColor(_ score: Int) -> Color {
         switch score {
         case ..<35: return Color(red: 0.62, green: 0.25, blue: 0.20)
@@ -34,6 +52,32 @@ enum Theme {
         case ..<75: return champagne
         default: return mutedEmerald
         }
+    }
+}
+
+struct OraliaHeader: View {
+    let eyebrow: String
+    let title: String
+    var subtitle: String? = nil
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(eyebrow.uppercased())
+                .font(.caption2.weight(.semibold))
+                .tracking(2.2)
+                .foregroundStyle(Theme.champagne)
+            Text(title)
+                .font(.system(size: 38, weight: .semibold, design: .serif))
+                .foregroundStyle(Theme.primary)
+                .lineSpacing(-4)
+            if let subtitle {
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -57,14 +101,40 @@ struct SectionCard<Content: View>: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.systemBackground))
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(.systemBackground).opacity(0.96))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
                         .stroke(Theme.champagne.opacity(0.22), lineWidth: 1)
                 )
                 .shadow(color: Theme.emerald.opacity(0.10), radius: 10, y: 4)
         )
+    }
+}
+
+struct SignalCard: View {
+    let title: String
+    let value: String
+    var footnote: String? = nil
+    var symbol: String = "sparkles"
+
+    var body: some View {
+        SectionCard(title: title) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: symbol)
+                    .foregroundStyle(Theme.champagne)
+                    .frame(width: 24)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(value)
+                        .font(.footnote)
+                    if let footnote {
+                        Text(footnote)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -127,5 +197,15 @@ struct ErrorBanner: View {
             .padding(10)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 10).fill(.red.opacity(0.1)))
+    }
+}
+
+struct SafetyFootnote: View {
+    var body: some View {
+        Text("Oralia is for reflection, self-knowledge, and planning. It describes tendencies and timing patterns, not fixed fate or medical, legal, financial, or mental health advice.")
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.top, 4)
     }
 }
