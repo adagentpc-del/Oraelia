@@ -3,13 +3,13 @@ import SwiftUI
 @main
 struct OraliaApp: App {
     @AppStorage("oraliaOnboardingComplete") private var onboardingComplete = false
-    @AppStorage("oraliaAppearance") private var appearance = "dark"
+    @AppStorage("oraliaAppearance") private var appearance = "light"
 
     var body: some Scene {
         WindowGroup {
             RootView(onboardingComplete: $onboardingComplete)
                 .tint(Theme.primary)
-                .preferredColorScheme(appearance == "light" ? .light : .dark)
+                .preferredColorScheme(appearance == "dark" ? .dark : .light)
         }
     }
 }
