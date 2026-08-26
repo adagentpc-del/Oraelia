@@ -117,11 +117,21 @@ Every city or line explanation should include:
 
 Build with **both light and dark modes**.
 
-The user-approved direction is gender-neutral, luxury, professional, modern, calm, mystical, elevated, and trustworthy. Green is the dominant brand color.
+The approved reference is the dual-mode Oralia design image with the split screen: dark green version on the left and light ivory version on the right. Treat that image as design authority.
+
+### Theme toggle behavior
+
+The app must expose an explicit Dark / Light toggle.
+
+- **Dark** must activate the deep green Oralia version.
+- **Light** must activate the soft ivory Oralia version.
+- The screen structure should remain consistent across modes; only the palette, contrast, glow, and surface treatment should change.
+- Dark mode is not black/gray generic iOS dark mode. It is rich emerald, black pine, gold linework, and cosmic glow.
+- Light mode is not plain white. It is ivory/cream, pale sage, soft warm gold, and low-contrast elegant cards.
 
 ### Dark mode
 
-The premium anchor mode:
+The premium green anchor mode:
 
 - Midnight Green Black: `#081917`
 - Dark Pine: `#0B2A26`
@@ -134,9 +144,18 @@ The premium anchor mode:
 - Champagne Gold: `#C8A96B`
 - Soft Brass: `#B89054`
 
+Dark mode should use:
+
+- dark green full-screen backgrounds
+- gold celestial icons and dividers
+- faint star/orbit accents
+- rounded dark cards with soft green highlights
+- ivory text with champagne hierarchy
+- app-screen feel similar to the dark half of the approved image
+
 ### Light mode
 
-The airy luxury version:
+The airy ivory version:
 
 - Soft Ivory: `#F6F2E9`
 - Warm Cream: `#FAF7EF`
@@ -148,6 +167,15 @@ The airy luxury version:
 - Champagne Gold: `#C8A96B`
 - Soft Brass: `#B89054`
 - Muted Sage: `#A9B9AE`
+
+Light mode should use:
+
+- ivory/cream full-screen backgrounds
+- pale sage panels and lines
+- warm gold celestial accents
+- soft low-contrast card borders
+- deep emerald text hierarchy
+- app-screen feel similar to the light half of the approved image
 
 ### Typography
 
@@ -245,6 +273,6 @@ Before public iOS release:
 - App generates a personalized optimized report combining astrology, Human Design, numerology, Places/astrocartography, chakras, personality/archetypes, and timing.
 - App shows a daily guide with practical actions and calendar-style energetic guidance.
 - App includes the Places / Astrocartography module.
-- Light and dark modes match the green luxury Oralia mockup direction.
+- Dark/Light toggle works exactly as approved: dark is the deep green version, light is the ivory/sage version.
 - App communicates confidence/limitations clearly and does not make deterministic fate claims.
 - iOS build path is documented and smoke-tested on Mac/Xcode.
