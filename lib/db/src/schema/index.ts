@@ -9,4 +9,8 @@ export * from "./locationProfiles";
 export * from "./contentLibrary";
 export * from "./generatedContent";
 export * from "./lifeEvents";
+export * from "./memoryItems";
+export * from "./brainDumps";
+export * from "./oraliaReminders";
+export * from "./addressProfiles";
 export * from "./authTokens";
