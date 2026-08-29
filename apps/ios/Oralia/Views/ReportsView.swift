@@ -10,28 +10,30 @@ struct ReportsView: View {
     ]
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                OraliaHeader(
-                    eyebrow: "Optimized Report",
-                    title: "Your personal intelligence profile.",
-                    subtitle: "A unified synthesis of astrology, Human Design, numerology, timing, relationship patterns, body signals, chakras, places, strengths, shadows, and practical guidance."
-                )
+        ZStack {
+            CelestialBackground()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    OraliaHeader(
+                        eyebrow: "Optimized Report",
+                        title: "Your personal intelligence profile.",
+                        subtitle: "A cohesive read of your chart, timing, patterns, places, relationships, body signals, strengths, shadows, and practical guidance."
+                    )
 
-                if let error = loader.error {
-                    ErrorBanner(message: error)
-                } else if loader.isLoading {
-                    ProgressView().frame(maxWidth: .infinity).padding(40)
-                } else if let response = loader.value {
-                    optimizedOverview(response.reports)
-                    reportGrid(response.reports)
-                    integrationStandard
-                    SafetyFootnote()
+                    if let error = loader.error {
+                        ErrorBanner(message: error)
+                    } else if loader.isLoading {
+                        reportSkeleton
+                    } else if let response = loader.value {
+                        optimizedHero(response.reports)
+                        reportGrid(response.reports)
+                        integrationStandard
+                        SafetyFootnote()
+                    }
                 }
+                .padding(18)
             }
-            .padding()
         }
-        .background(Theme.appBackground.ignoresSafeArea())
         .navigationTitle("Report")
         .toolbar {
             Button { load() } label: { Image(systemName: "arrow.clockwise") }
@@ -43,85 +45,148 @@ struct ReportsView: View {
         loader.run { try await APIClient.shared.get("/natal/reports") }
     }
 
-    @ViewBuilder
-    private func optimizedOverview(_ reports: [LifeReport]) -> some View {
-        SectionCard(title: "Synthesis", subtitle: "The report is designed to become one coherent read of the user, not separate mystical tabs.") {
-            VStack(alignment: .leading, spacing: 10) {
-                Label("Charts become patterns. Patterns become timing. Timing becomes practical guidance.", systemImage: "sparkles")
-                    .font(.footnote)
-                    .foregroundStyle(Theme.primary)
-                Label("Every claim should show evidence, confidence, higher expression, shadow expression, and one practical use.", systemImage: "checkmark.seal")
-                    .font(.footnote)
-                Label("Places, timing, relationships, career, body, and spirituality should all connect back to the same personal pattern map.", systemImage: "point.3.connected.trianglepath.dotted")
-                    .font(.footnote)
+    private var reportSkeleton: some View {
+        HeroOracleCard(
+            title: "Reading your pattern",
+            subtitle: "Oralia is organizing your signals into one practical profile."
+        ) {
+            VStack(spacing: 10) {
+                ProgressView()
+                    .tint(Theme.primary)
+                    .frame(maxWidth: .infinity)
+                Text("Calculations stay separate from interpretation so the report remains grounded.")
+                    .font(.caption)
+                    .foregroundStyle(Theme.secondaryText)
+                    .multilineTextAlignment(.center)
             }
         }
+    }
 
-        if let first = reports.first {
-            SectionCard(title: "Lead Insight", subtitle: first.title) {
-                Text(first.headline)
-                    .font(.system(.title3, design: .serif))
-                    .foregroundStyle(Theme.primary)
-                    .fixedSize(horizontal: false, vertical: true)
+    @ViewBuilder
+    private func optimizedHero(_ reports: [LifeReport]) -> some View {
+        let lead = reports.first
+        HeroOracleCard(
+            title: lead?.title ?? "Personal Pattern Map",
+            subtitle: lead?.headline ?? "Your report connects symbolic systems into one usable operating profile."
+        ) {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 10) {
+                    intelligencePill("Chart")
+                    intelligencePill("Timing")
+                    intelligencePill("Places")
+                    intelligencePill("Body")
+                }
+
+                Divider().overlay(Theme.cardStroke)
+
+                VStack(alignment: .leading, spacing: 10) {
+                    Label("Charts become patterns.", systemImage: "circle.grid.cross")
+                    Label("Patterns become timing.", systemImage: "calendar.badge.clock")
+                    Label("Timing becomes practical guidance.", systemImage: "sparkles")
+                }
+                .font(.footnote)
+                .foregroundStyle(Theme.primaryText)
             }
         }
+    }
+
+    private func intelligencePill(_ text: String) -> some View {
+        Text(text.uppercased())
+            .font(.caption2.weight(.semibold))
+            .tracking(1.1)
+            .foregroundStyle(Theme.primary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(
+                Capsule()
+                    .fill(Theme.softPanel)
+                    .overlay(Capsule().stroke(Theme.cardStroke, lineWidth: 1))
+            )
     }
 
     @ViewBuilder
     private func reportGrid(_ reports: [LifeReport]) -> some View {
-        LazyVStack(spacing: 12) {
-            ForEach(reports) { report in
-                NavigationLink {
-                    ReportDetailView(report: report)
-                } label: {
-                    HStack(spacing: 14) {
-                        Image(systemName: icons[report.category] ?? "book")
-                            .foregroundStyle(Theme.champagne)
-                            .frame(width: 30)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(report.title)
-                                .font(.system(.headline, design: .serif))
-                                .foregroundStyle(Theme.primary)
-                            Text(report.headline)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(3)
-                                .multilineTextAlignment(.leading)
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Life Areas")
+                .font(.system(.title3, design: .serif).weight(.semibold))
+                .foregroundStyle(Theme.primaryText)
+                .padding(.top, 2)
+
+            LazyVStack(spacing: 12) {
+                ForEach(Array(reports.enumerated()), id: \.element.id) { index, report in
+                    NavigationLink {
+                        ReportDetailView(report: report)
+                    } label: {
+                        reportRow(report, index: index)
                     }
-                    .padding(16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(Color(.systemBackground).opacity(0.96))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                    .stroke(Theme.champagne.opacity(0.20), lineWidth: 1)
-                            )
-                    )
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
         }
     }
 
-    private var integrationStandard: some View {
-        SectionCard(title: "Report Standard") {
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach([
-                    "What the system says",
-                    "What it means for the user",
-                    "How it shows up in real life",
-                    "Higher expression and shadow expression",
-                    "Suggested action and confidence limits"
-                ], id: \.self) { item in
-                    Label(item, systemImage: "checkmark.circle")
-                        .font(.caption)
-                }
+    private func reportRow(_ report: LifeReport, index: Int) -> some View {
+        HStack(spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(Theme.softPanel)
+                    .overlay(Circle().stroke(Theme.cardStroke, lineWidth: 1))
+                Image(systemName: icons[report.category] ?? "book.closed")
+                    .font(.headline)
+                    .foregroundStyle(Theme.primary)
             }
+            .frame(width: 46, height: 46)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(report.title)
+                    .font(.system(.headline, design: .serif).weight(.semibold))
+                    .foregroundStyle(Theme.primaryText)
+                Text(report.headline)
+                    .font(.caption)
+                    .foregroundStyle(Theme.secondaryText)
+                    .lineLimit(3)
+                    .multilineTextAlignment(.leading)
+            }
+
+            Spacer(minLength: 10)
+
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(Theme.secondaryText.opacity(0.65))
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(index == 0 ? Theme.elevatedCardFill : Theme.cardFill)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Theme.cardStroke, lineWidth: 1)
+                )
+                .shadow(color: Theme.emerald.opacity(index == 0 ? 0.11 : 0.06), radius: index == 0 ? 18 : 10, y: index == 0 ? 10 : 5)
+        )
+    }
+
+    private var integrationStandard: some View {
+        SectionCard(title: "Report Standard", subtitle: "Every insight has to become useful, not just mystical.") {
+            VStack(alignment: .leading, spacing: 10) {
+                standardLine("Meaning", "What the system says and why it matters")
+                standardLine("Pattern", "How it shows up in real life")
+                standardLine("Action", "How to use the signal today")
+                standardLine("Limits", "Confidence, evidence, and disclaimers")
+            }
+        }
+    }
+
+    private func standardLine(_ label: String, _ value: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Text(label.uppercased())
+                .font(.caption2.weight(.bold))
+                .tracking(1.0)
+                .foregroundStyle(Theme.primary)
+                .frame(width: 64, alignment: .leading)
+            Text(value)
+                .font(.caption)
+                .foregroundStyle(Theme.secondaryText)
         }
     }
 }
@@ -130,46 +195,54 @@ struct ReportDetailView: View {
     let report: LifeReport
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                OraliaHeader(
-                    eyebrow: report.category,
-                    title: report.title,
-                    subtitle: report.headline
-                )
+        ZStack {
+            CelestialBackground()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    OraliaHeader(
+                        eyebrow: report.category,
+                        title: report.title,
+                        subtitle: report.headline
+                    )
 
-                ForEach(report.sections) { section in
-                    SectionCard(title: section.heading) {
-                        Text(section.content)
-                            .font(.footnote)
-                            .fixedSize(horizontal: false, vertical: true)
+                    ForEach(report.sections) { section in
+                        SectionCard(title: section.heading) {
+                            Text(section.content)
+                                .font(.footnote)
+                                .foregroundStyle(Theme.primaryText)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                     }
-                }
 
-                SectionCard(title: "How to Use This") {
-                    ForEach(report.actions, id: \.self) { action in
-                        Label(action, systemImage: "checkmark.circle")
-                            .font(.footnote)
+                    SectionCard(title: "How to Use This") {
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach(report.actions, id: \.self) { action in
+                                Label(action, systemImage: "checkmark.circle")
+                                    .font(.footnote)
+                                    .foregroundStyle(Theme.primaryText)
+                            }
+                        }
                     }
-                }
 
-                SectionCard(title: "Evidence and Confidence") {
-                    ForEach(report.evidence, id: \.self) { item in
-                        Text("· \(item)")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                    SectionCard(title: "Evidence and Confidence") {
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach(report.evidence, id: \.self) { item in
+                                Text("• \(item)")
+                                    .font(.caption2)
+                                    .foregroundStyle(Theme.secondaryText)
+                            }
+                            Text("Interpretation is tendency-based. Calculated chart facts and personal synthesis remain separate.")
+                                .font(.caption2)
+                                .foregroundStyle(Theme.secondaryText)
+                                .padding(.top, 4)
+                        }
                     }
-                    Text("Interpretation is tendency-based. Calculated chart facts and personal synthesis should remain separate.")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 4)
-                }
 
-                SafetyFootnote()
+                    SafetyFootnote()
+                }
+                .padding(18)
             }
-            .padding()
         }
-        .background(Theme.appBackground.ignoresSafeArea())
         .navigationTitle(report.title)
         .navigationBarTitleDisplayMode(.inline)
     }
