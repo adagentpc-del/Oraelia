@@ -1,12 +1,25 @@
-# UI/UX Pro Max → Oralia Design Port
+# UI/UX Pro Max → Oralia Full Design Pass
 
 This document records how the `nextlevelbuilder/ui-ux-pro-max-skill` repo should influence Oralia.
 
 ## Source authority
 
-The repo is a UI/UX reasoning and design-system skill, not a drop-in Oralia frontend. It provides searchable design rules, product categories, styles, palettes, typography, charts, motion, accessibility, and framework guidance.
+The UI/UX Pro Max repository is a UI/UX reasoning and design-system skill, not a drop-in Oralia frontend. It provides searchable design rules, product categories, styles, palettes, typography, charts, motion, accessibility, and framework guidance.
 
 Use it as a design intelligence layer alongside `ORALIA_MASTER_BUILD_SPEC.md` and the approved Oralia mockup images.
+
+## Approved visual reference
+
+The Oralia dual-theme mockup is the visual authority:
+
+- **Default Light mode:** ivory, cream, sage, soft pearl champagne, deep emerald text.
+- **Dark mode:** deep green, black pine, restrained pearl accents, celestial glow.
+- Same product structure in both modes.
+- No mustard yellow.
+- No harsh yellow gold.
+- No masculine crypto-dashboard visual language.
+- No generic SwiftUI/iOS gray form screens.
+- No cheap zodiac/cartoon/tarot visual system.
 
 ## Oralia design target
 
@@ -28,7 +41,7 @@ Dark mode:
 - Pearl accents, not yellow-gold.
 - No generic iOS black/gray.
 
-## Motion standard
+## Motion standard from UI/UX Pro Max
 
 Motion should be subtle and useful:
 
@@ -39,7 +52,19 @@ Motion should be subtle and useful:
 - Respect reduced-motion expectations.
 - Animated chart reveals should clarify data, not decorate it.
 
-## iOS implementation
+## Chart/graph standard from UI/UX Pro Max
+
+For Oralia charts:
+
+- Astrology chart rings reveal progressively.
+- Score rings and bars animate on load.
+- Human Design centers should tap/expand with clear explanations.
+- Places map cards should transition smoothly.
+- Relationship overlays should use direct labels and summaries.
+- Chart meaning must not rely on color alone.
+- Every visual chart needs readable labels or a text summary.
+
+## iOS implementation standard
 
 SwiftUI should use:
 
@@ -47,10 +72,11 @@ SwiftUI should use:
 - `HeroOracleCard` for primary panels.
 - `SectionCard` for calm glass-like cards.
 - Animated `ScoreRing` and `ScoreBar` for dashboard metrics.
+- Animated `ChartWheel` reveal for natal chart.
+- Custom settings/onboarding/report surfaces instead of default `Form` or generic `List` where the user sees core product value.
 - Gentle opacity/offset transitions between onboarding steps and guide sections.
-- Future chart work should animate rings, chart nodes, map city cards, and relationship overlays.
 
-## React/web implementation
+## React/web implementation standard
 
 React surfaces should use:
 
@@ -60,20 +86,9 @@ React surfaces should use:
 - Chart animations with direct labels and accessible summaries.
 - `prefers-reduced-motion` support.
 
-## Chart/graph standard
-
-For Oralia charts:
-
-- Astrology chart rings should reveal progressively.
-- Human Design centers should tap/expand with clear explanations.
-- Daily score rings and bars should animate on load.
-- Places map cards should transition smoothly.
-- Chart meaning must not rely on color alone.
-- Every visual chart needs readable labels or a text summary.
-
 ## Current implemented pass
 
-Implemented on iOS main branch:
+Implemented on iOS `main` branch:
 
 - Default light mode.
 - Mustard/yellow removed from theme.
@@ -85,16 +100,19 @@ Implemented on iOS main branch:
 - Animated score bars.
 - Daily Guide upgraded with premium hero structure.
 - Onboarding upgraded with premium hero structure and step transitions.
+- Report screen replaced with premium Oralia cards and synthesis hero.
+- Report detail pages moved onto the celestial design surface.
+- Settings replaced with custom Oralia cards instead of default SwiftUI form styling.
+- Natal Chart screen moved onto the celestial design surface.
+- Natal chart wheel now animates in with a soft reveal and subtle breathing motion.
 
-## Remaining visual work
-
-Still required before claiming pixel-level mockup parity:
+## Remaining visual work before claiming pixel-level mockup parity
 
 1. Build exact screen-by-screen layout against approved mockups.
-2. Replace default SwiftUI form controls with custom Oralia input components.
-3. Add custom astrology chart visuals and motion.
-4. Add Human Design bodygraph styling and tap states.
-5. Add Places map card transitions and custom callouts.
-6. Add custom loading skeletons.
-7. Add image/illustration assets matching the mockups.
-8. Create a full component inventory and visual regression screenshots.
+2. Replace every remaining default SwiftUI form control with custom Oralia input components.
+3. Add full Human Design bodygraph styling and tap states.
+4. Add Places map card transitions and custom callouts.
+5. Add custom loading skeletons.
+6. Add image/illustration assets matching the mockups.
+7. Add visual regression screenshots from Xcode simulator.
+8. Add App Store-ready screenshots after the iOS build is visually approved.
