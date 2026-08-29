@@ -3,6 +3,7 @@ import SwiftUI
 struct TodayView: View {
     @StateObject private var loader = Loadable<DailyForecast>()
     @State private var appeared = false
+    @State private var latestBrainDump: BrainDumpResponse?
 
     var body: some View {
         ZStack {
@@ -10,12 +11,27 @@ struct TodayView: View {
             ScrollView {
                 VStack(spacing: 18) {
                     OraliaHeader(
-                        eyebrow: "Daily Guide",
-                        title: "Your energetic plan for today.",
-                        subtitle: "A practical synthesis of timing, numerology, transits, life areas, and your current decision climate."
+                        eyebrow: "Today",
+                        title: "What is your signal today?",
+                        subtitle: "Oralia combines timing, chart intelligence, memory, goals, and what is actually happening in your life."
                     )
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 12)
+
+                    BrainDumpCard(latest: $latestBrainDump)
+
+                    if let latestBrainDump {
+                        SectionCard(title: "Memory Updated", subtitle: latestBrainDump.extraction.lifeArea.capitalized) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(latestBrainDump.todayAdjustment)
+                                    .font(.footnote)
+                                    .foregroundStyle(Theme.primaryText)
+                                Text("Saved as: \(latestBrainDump.memory.title)")
+                                    .font(.caption2)
+                                    .foregroundStyle(Theme.secondaryText)
+                            }
+                        }
+                    }
 
                     if let error = loader.error {
                         ErrorBanner(message: error)
@@ -35,7 +51,7 @@ struct TodayView: View {
                 .padding()
             }
         }
-        .navigationTitle("Guide")
+        .navigationTitle("Today")
         .toolbar {
             Button {
                 load()
@@ -58,7 +74,7 @@ struct TodayView: View {
     @ViewBuilder
     private func content(_ forecast: DailyForecast) -> some View {
         HeroOracleCard(
-            title: "Today’s Theme",
+            title: "Today’s Timing",
             subtitle: "Personal day \(forecast.personalDay) • \(forecast.date)"
         ) {
             VStack(alignment: .leading, spacing: 16) {
@@ -83,6 +99,16 @@ struct TodayView: View {
             footnote: "This is a timing signal, not a guarantee.",
             symbol: "arrow.up.right.circle"
         )
+
+        if !forecast.powerHours.isEmpty {
+            SectionCard(title: "Power Hours", subtitle: "Save these as in-app reminders once notification scheduling is wired.") {
+                VStack(alignment: .leading, spacing: 9) {
+                    ForEach(forecast.powerHours.prefix(5)) { hour in
+                        PowerHourRow(hour: hour)
+                    }
+                }
+            }
+        }
 
         if !forecast.avoid.isEmpty || !forecast.risks.isEmpty {
             SectionCard(title: "Avoid Today") {
@@ -151,25 +177,6 @@ struct TodayView: View {
             symbol: "moon.stars"
         )
 
-        if !forecast.powerHours.isEmpty {
-            SectionCard(title: "Power Hours") {
-                VStack(alignment: .leading, spacing: 9) {
-                    ForEach(forecast.powerHours.prefix(5)) { hour in
-                        HStack(alignment: .top, spacing: 12) {
-                            Text(hour.label)
-                                .font(.caption.monospacedDigit().bold())
-                                .foregroundStyle(Theme.accent)
-                                .frame(width: 92, alignment: .leading)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("\(hour.ruler) hour").font(.caption.bold()).foregroundStyle(Theme.primaryText)
-                                Text(hour.good).font(.caption2).foregroundStyle(Theme.secondaryText)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         if !forecast.transits.isEmpty || !forecast.retrogrades.isEmpty {
             SectionCard(title: "Transit Notes") {
                 VStack(alignment: .leading, spacing: 8) {
@@ -206,5 +213,100 @@ struct TodayView: View {
         .sorted { $0.1 > $1.1 }
         .prefix(3)
         .map { $0.0 }
+    }
+}
+
+struct BrainDumpCard: View {
+    @Binding var latest: BrainDumpResponse?
+    @State private var text = ""
+    @State private var saving = false
+    @State private var error: String?
+
+    var body: some View {
+        HeroOracleCard(
+            title: "Brain Dump",
+            subtitle: "What is going on today? How are you feeling? What changed? What are you working on?"
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
+                TextField("Talk to Oralia like a private life log…", text: $text, axis: .vertical)
+                    .lineLimit(4...8)
+                    .textFieldStyle(.plain)
+                    .padding(14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(Theme.cardFill)
+                            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Theme.cardStroke, lineWidth: 1))
+                    )
+                HStack {
+                    Button {
+                        save()
+                    } label: {
+                        Label(saving ? "Saving…" : "Save to Memory", systemImage: "waveform")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.primary)
+                    .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).count < 4 || saving)
+                    Spacer()
+                    Text("Voice transcript next")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.secondaryText)
+                }
+                if let error {
+                    ErrorBanner(message: error)
+                }
+            }
+        }
+    }
+
+    private func save() {
+        saving = true
+        error = nil
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        let body: [String: Any] = [
+            "rawText": text,
+            "inputMode": "text",
+            "date": formatter.string(from: Date())
+        ]
+        Task { @MainActor in
+            do {
+                let response: BrainDumpResponse = try await APIClient.shared.post("/memory/brain-dump", body: body)
+                latest = response
+                text = ""
+            } catch {
+                self.error = error.localizedDescription
+            }
+            saving = false
+        }
+    }
+}
+
+struct PowerHourRow: View {
+    let hour: PowerHour
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(hour.label)
+                    .font(.caption.monospacedDigit().bold())
+                    .foregroundStyle(Theme.accent)
+                Text("\(hour.ruler) hour")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.secondaryText)
+            }
+            .frame(width: 96, alignment: .leading)
+            Text(hour.good)
+                .font(.caption)
+                .foregroundStyle(Theme.primaryText)
+            Spacer()
+            Button {
+                // Notification scheduling comes after local notification permission wiring.
+            } label: {
+                Image(systemName: "bell.badge")
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Theme.primary)
+        }
     }
 }
