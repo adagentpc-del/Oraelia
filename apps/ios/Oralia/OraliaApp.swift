@@ -34,15 +34,15 @@ struct MainTabs: View {
     var body: some View {
         TabView {
             NavigationStack { TodayView() }
-                .tabItem { Label("Guide", systemImage: "sun.max") }
+                .tabItem { Label("Today", systemImage: "sun.max") }
+            NavigationStack { MemoryView() }
+                .tabItem { Label("Memory", systemImage: "clock.arrow.circlepath") }
             NavigationStack { ReportsView() }
                 .tabItem { Label("Report", systemImage: "book.closed") }
             NavigationStack { AstroMapView() }
                 .tabItem { Label("Places", systemImage: "globe.americas") }
-            NavigationStack { TimingHubView() }
-                .tabItem { Label("Timing", systemImage: "calendar.badge.clock") }
             NavigationStack { MoreView(onboardingComplete: $onboardingComplete) }
-                .tabItem { Label("More", systemImage: "sparkles") }
+                .tabItem { Label("More", systemImage: "circle.grid.2x2") }
         }
     }
 }
@@ -90,7 +90,10 @@ struct MoreView: View {
                     Label("Relationships", systemImage: "heart.circle")
                 }
             }
-            Section("Pattern intelligence") {
+            Section("Timing and memory") {
+                NavigationLink { TimingHubView() } label: {
+                    Label("Timing", systemImage: "calendar.badge.clock")
+                }
                 NavigationLink { LifeEventsView() } label: {
                     Label("Life Events", systemImage: "clock.arrow.circlepath")
                 }
