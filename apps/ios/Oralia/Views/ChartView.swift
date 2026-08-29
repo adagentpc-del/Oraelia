@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ChartView: View {
     @StateObject private var loader = Loadable<ChartResponse>()
+    @State private var lens = "Today"
+    private let lenses = ["Today", "Memory", "Overall", "Go Deeper"]
 
     var body: some View {
         ZStack {
@@ -10,8 +12,8 @@ struct ChartView: View {
                 VStack(spacing: 18) {
                     OraliaHeader(
                         eyebrow: "Natal Blueprint",
-                        title: "The symbolic architecture underneath the report.",
-                        subtitle: "Your chart is the calculation layer. Oralia turns it into patterns, timing, and practical guidance."
+                        title: "Your chart first, then the meaning.",
+                        subtitle: "The diagram stays at the top. Today, Memory, Overall, and Go Deeper explain the same chart from different angles."
                     )
 
                     if let error = loader.error { ErrorBanner(message: error) }
@@ -42,62 +44,72 @@ struct ChartView: View {
             ErrorBanner(message: "Birth location approximate. Set exact coordinates in Settings for more precise houses.")
         }
 
-        HeroOracleCard(
-            title: "\(chart.sunSign) Sun · \(chart.moonSign) Moon · \(chart.ascendantSign) Rising",
-            subtitle: "\(chart.isDayChart ? "Day" : "Night") chart · ruled by \(chart.chartRuler) · \(chart.moonPhase.name)"
-        ) {
-            HStack(spacing: 12) {
-                bigThree("Sun", chart.sunSign, "sun.max")
-                bigThree("Moon", chart.moonSign, "moon")
-                bigThree("Rising", chart.ascendantSign, "sunrise")
-            }
-        }
-
-        SectionCard(title: "Chart Wheel", subtitle: "Animated reveal of the calculation layer. Tap deeper screens for interpretation.") {
+        SectionCard(title: "Natal Wheel", subtitle: "Diagram first. Every glyph, house, angle, and aspect should become tappable in the next interaction pass.") {
             ChartWheel(chart: chart)
-                .frame(height: 320)
+                .frame(height: 330)
         }
 
-        SectionCard(title: "Placements") {
-            VStack(spacing: 8) {
-                ForEach(chart.bodies) { body in
-                    HStack {
-                        Text(body.body)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(Theme.primaryText)
-                            .frame(width: 82, alignment: .leading)
-                        Text(body.formatted)
-                            .font(.caption)
-                            .foregroundStyle(Theme.secondaryText)
-                        if body.retrograde {
-                            Text("℞")
-                                .font(.caption)
-                                .foregroundStyle(Theme.primary)
-                        }
-                        Spacer()
-                        Text("H\(body.house)")
-                            .font(.caption2)
-                            .foregroundStyle(Theme.secondaryText)
-                        Text(body.dignity)
-                            .font(.caption2.weight(.medium))
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 3)
-                            .background(Capsule().fill(dignityColor(body.dignity).opacity(0.13)))
-                            .foregroundStyle(dignityColor(body.dignity))
-                    }
-                    .padding(.vertical, 2)
+        Picker("Chart lens", selection: $lens) {
+            ForEach(lenses, id: \.self) { item in Text(item).tag(item) }
+        }
+        .pickerStyle(.segmented)
+
+        switch lens {
+        case "Memory":
+            memoryLens(chart)
+        case "Overall":
+            overallLens(chart)
+        case "Go Deeper":
+            goDeeperLens(chart)
+        default:
+            todayLens(chart)
+        }
+    }
+
+    @ViewBuilder
+    private func todayLens(_ chart: NatalChart) -> some View {
+        HeroOracleCard(
+            title: "Today through the chart",
+            subtitle: "\(chart.sunSign) Sun · \(chart.moonSign) Moon · \(chart.ascendantSign) Rising"
+        ) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 12) {
+                    bigThree("Sun", chart.sunSign, "sun.max")
+                    bigThree("Moon", chart.moonSign, "moon")
+                    bigThree("Rising", chart.ascendantSign, "sunrise")
                 }
+                Text("Use the chart as the permanent blueprint, then let Today and Memory decide which pieces matter right now.")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.secondaryText)
             }
         }
 
-        SectionCard(title: "Chart Shape: \(chart.shape.shape)") {
-            Text(chart.shape.description)
-                .font(.footnote)
-                .foregroundStyle(Theme.primaryText)
+        SectionCard(title: "Today’s Chart Use") {
+            VStack(alignment: .leading, spacing: 8) {
+                Label("Lead with the chart ruler: \(chart.chartRuler).", systemImage: "smallcircle.circle")
+                Label("Track emotional tone through the \(chart.moonPhase.name) moon phase.", systemImage: "moon")
+                Label("Use dominant planets as the strongest recurring pattern signals.", systemImage: "point.3.connected.trianglepath.dotted")
+            }
+            .font(.footnote)
+            .foregroundStyle(Theme.primaryText)
+        }
+    }
+
+    @ViewBuilder
+    private func memoryLens(_ chart: NatalChart) -> some View {
+        SectionCard(title: "Memory Cross-Reference") {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Logged memories should be compared against this chart: profection year, houses, angles, transits, repeated planets, moves, relationships, launches, losses, and body events.")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.primaryText)
+                Text("Next build pass: pull Memory API results directly into this lens and show which chart factors repeat across life events.")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.secondaryText)
+            }
         }
 
         if !chart.patterns.isEmpty {
-            SectionCard(title: "Aspect Patterns") {
+            SectionCard(title: "Patterns to Watch in Memory") {
                 VStack(alignment: .leading, spacing: 10) {
                     ForEach(chart.patterns) { pattern in
                         VStack(alignment: .leading, spacing: 4) {
@@ -110,6 +122,20 @@ struct ChartView: View {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func overallLens(_ chart: NatalChart) -> some View {
+        HeroOracleCard(
+            title: "\(chart.sunSign) Sun · \(chart.moonSign) Moon · \(chart.ascendantSign) Rising",
+            subtitle: "\(chart.isDayChart ? "Day" : "Night") chart · ruled by \(chart.chartRuler) · \(chart.moonPhase.name)"
+        ) {
+            HStack(spacing: 12) {
+                bigThree("Sun", chart.sunSign, "sun.max")
+                bigThree("Moon", chart.moonSign, "moon")
+                bigThree("Rising", chart.ascendantSign, "sunrise")
             }
         }
 
@@ -125,11 +151,6 @@ struct ChartView: View {
                         balanceTile(label: modality, value: chart.balance.modalities[modality] ?? 0, active: chart.balance.dominantModality == modality)
                     }
                 }
-                if !chart.balance.missingElements.isEmpty {
-                    Text("Missing: \(chart.balance.missingElements.joined(separator: ", ")). Supplement deliberately, not reactively.")
-                        .font(.caption2)
-                        .foregroundStyle(Theme.secondaryText)
-                }
             }
         }
 
@@ -140,22 +161,44 @@ struct ChartView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private func goDeeperLens(_ chart: NatalChart) -> some View {
+        SectionCard(title: "Placements") {
+            VStack(spacing: 8) {
+                ForEach(chart.bodies) { body in
+                    NavigationLink {
+                        ChartFactorDetailView(title: body.body, subtitle: body.formatted, detail: "House \(body.house). Dignity: \(body.dignity). Strength: \(body.strength). This screen will become the deep clickable explanation for this placement.")
+                    } label: {
+                        HStack {
+                            Text(body.body).font(.caption.weight(.semibold)).foregroundStyle(Theme.primaryText).frame(width: 82, alignment: .leading)
+                            Text(body.formatted).font(.caption).foregroundStyle(Theme.secondaryText)
+                            if body.retrograde { Text("℞").font(.caption).foregroundStyle(Theme.primary) }
+                            Spacer()
+                            Text("H\(body.house)").font(.caption2).foregroundStyle(Theme.secondaryText)
+                            Image(systemName: "chevron.right").font(.caption2).foregroundStyle(Theme.secondaryText)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
 
         SectionCard(title: "Major Aspects") {
             VStack(spacing: 8) {
                 ForEach(chart.aspects.filter { $0.major }.prefix(14).map { $0 }) { aspect in
-                    HStack {
-                        Text("\(aspect.a) \(aspect.type) \(aspect.b)")
-                            .font(.caption)
-                            .foregroundStyle(Theme.primaryText)
-                        Spacer()
-                        Text(String(format: "%.1f°", aspect.orb))
-                            .font(.caption2.monospacedDigit())
-                            .foregroundStyle(Theme.secondaryText)
-                        Circle()
-                            .fill(aspect.harmonyScore >= 0 ? Theme.softEmerald.opacity(0.72) : Theme.warmTaupe.opacity(0.72))
-                            .frame(width: 8, height: 8)
+                    NavigationLink {
+                        ChartFactorDetailView(title: "\(aspect.a) \(aspect.type) \(aspect.b)", subtitle: String(format: "Orb %.1f°", aspect.orb), detail: "This aspect should explain the general meaning, your specific expression, memory examples, timing activations, shadow expression, and practical use.")
+                    } label: {
+                        HStack {
+                            Text("\(aspect.a) \(aspect.type) \(aspect.b)").font(.caption).foregroundStyle(Theme.primaryText)
+                            Spacer()
+                            Text(String(format: "%.1f°", aspect.orb)).font(.caption2.monospacedDigit()).foregroundStyle(Theme.secondaryText)
+                            Image(systemName: "chevron.right").font(.caption2).foregroundStyle(Theme.secondaryText)
+                        }
                     }
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -163,47 +206,57 @@ struct ChartView: View {
 
     private func bigThree(_ label: String, _ sign: String, _ icon: String) -> some View {
         VStack(spacing: 7) {
-            ZStack {
-                Circle().fill(Theme.softPanel)
-                Image(systemName: icon).foregroundStyle(Theme.primary)
-            }
-            .frame(width: 42, height: 42)
-            Text(sign)
-                .font(.system(.subheadline, design: .serif).weight(.semibold))
-                .foregroundStyle(Theme.primaryText)
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(Theme.secondaryText)
+            ZStack { Circle().fill(Theme.softPanel); Image(systemName: icon).foregroundStyle(Theme.primary) }
+                .frame(width: 42, height: 42)
+            Text(sign).font(.system(.subheadline, design: .serif).weight(.semibold)).foregroundStyle(Theme.primaryText)
+            Text(label).font(.caption2).foregroundStyle(Theme.secondaryText)
         }
         .frame(maxWidth: .infinity)
     }
 
     private func balanceTile(label: String, value: Int, active: Bool) -> some View {
         VStack(spacing: 4) {
-            Text("\(value)")
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(active ? Theme.primary : Theme.secondaryText)
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(Theme.secondaryText)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
+            Text("\(value)").font(.title3.weight(.semibold)).foregroundStyle(active ? Theme.primary : Theme.secondaryText)
+            Text(label).font(.caption2).foregroundStyle(Theme.secondaryText).lineLimit(1).minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(active ? Theme.softPanel : Theme.cardFill.opacity(0.55))
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.cardStroke, lineWidth: 1))
-        )
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(active ? Theme.softPanel : Theme.cardFill.opacity(0.55)).overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.cardStroke, lineWidth: 1)))
     }
+}
 
-    private func dignityColor(_ dignity: String) -> Color {
-        switch dignity {
-        case "domicile", "exaltation": return Theme.emerald
-        case "detriment", "fall": return Theme.warmTaupe
-        default: return Theme.secondaryText
+struct ChartFactorDetailView: View {
+    let title: String
+    let subtitle: String
+    let detail: String
+
+    var body: some View {
+        ZStack {
+            CelestialBackground()
+            ScrollView {
+                VStack(spacing: 16) {
+                    OraliaHeader(eyebrow: "Go deeper", title: title, subtitle: subtitle)
+                    SectionCard(title: "Interpretation Standard") {
+                        Text(detail).font(.footnote).foregroundStyle(Theme.primaryText)
+                    }
+                    SectionCard(title: "What this should include next") {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("General meaning")
+                            Text("Personal meaning")
+                            Text("Today’s use")
+                            Text("Memory examples")
+                            Text("Higher and shadow expression")
+                            Text("One practical action")
+                        }
+                        .font(.caption)
+                        .foregroundStyle(Theme.secondaryText)
+                    }
+                }
+                .padding()
+            }
         }
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -261,10 +314,7 @@ struct ChartWheel: View {
             for body in chart.bodies {
                 let glyph = Self.glyphs[body.body] ?? "•"
                 let planetPoint = point(longitude: body.longitude, r: radius * 0.65)
-                context.draw(
-                    Text(glyph).font(.system(size: 16)).foregroundStyle(body.retrograde ? Theme.warmTaupe : Theme.primaryText),
-                    at: planetPoint
-                )
+                context.draw(Text(glyph).font(.system(size: 16)).foregroundStyle(body.retrograde ? Theme.warmTaupe : Theme.primaryText), at: planetPoint)
             }
 
             context.draw(Text("ASC").font(.system(size: 9, weight: .bold)).foregroundStyle(Theme.primary), at: point(longitude: ascendant, r: radius * 0.12))
