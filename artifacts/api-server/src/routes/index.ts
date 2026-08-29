@@ -20,6 +20,9 @@ import humanDesignRouter from "./humanDesign";
 import decisionRouter from "./decision";
 import timingRouter from "./timing";
 import lifeEventsRouter from "./lifeEvents";
+import memoryRouter from "./memory";
+import remindersRouter from "./reminders";
+import addressProfilesRouter from "./addressProfiles";
 import exportRouter from "./export";
 
 const router: IRouter = Router();
@@ -45,6 +48,9 @@ router.use(humanDesignRouter);
 router.use(decisionRouter);
 router.use(timingRouter);
 router.use(lifeEventsRouter);
+router.use(memoryRouter);
+router.use(remindersRouter);
+router.use(addressProfilesRouter);
 router.use(exportRouter);
 
 export default router;
